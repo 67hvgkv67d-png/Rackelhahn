@@ -258,7 +258,7 @@
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V13</div>
+<div id="versionTag">V14</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -623,7 +623,7 @@ function triggerDecapitation(b,nx,ny){
   addScore(750,'Kopf abgerissen');
   shake=18;
   player.locked=.10;
-  player.rage=clamp(player.rage+6,0,100);
+  player.rage=8;
   narrate('Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.',5,true);
 }
 function attack(){
