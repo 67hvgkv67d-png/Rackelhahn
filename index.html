@@ -183,12 +183,73 @@
   #wrap, canvas, #touchControls, #joystick, .touchBtn{touch-action:none!important}
 }
 
+
+  #furyBanner{
+    position:absolute;
+    left:50%;
+    top:56px;
+    transform:translateX(-50%);
+    z-index:14;
+    display:none;
+    pointer-events:none;
+    padding:8px 14px 7px;
+    border-radius:999px;
+    background:linear-gradient(180deg,rgba(142,10,10,.92),rgba(91,0,0,.92));
+    border:1px solid rgba(255,220,220,.22);
+    color:#fff5f5;
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 24px rgba(145,0,0,.28);
+    text-align:center;
+  }
+  #furyBanner.active{
+    display:block;
+    animation:furyPulse 0.95s ease-in-out infinite;
+  }
+  #furyBanner small{
+    display:block;
+    margin-top:2px;
+    font-size:9px;
+    letter-spacing:.12em;
+    color:#ffd6d6;
+    opacity:.95;
+  }
+  #mobileHud.furyOn{
+    background:rgba(80,0,0,.72)!important;
+    border-color:rgba(255,220,220,.18)!important;
+    box-shadow:0 0 0 1px rgba(180,30,30,.18), 0 8px 18px rgba(0,0,0,.28)!important;
+  }
+  #rageMobile.furyOn, #rageText.furyOn{
+    color:#ffd7d7;
+    text-shadow:0 0 12px rgba(200,40,40,.55);
+    font-weight:800;
+  }
+  @keyframes furyPulse{
+    0%,100%{transform:translateX(-50%) scale(1); box-shadow:0 8px 24px rgba(0,0,0,.35), 0 0 20px rgba(145,0,0,.22);}
+    50%{transform:translateX(-50%) scale(1.03); box-shadow:0 10px 26px rgba(0,0,0,.38), 0 0 34px rgba(185,22,22,.45);}
+  }
+  @media (pointer:coarse), (max-width:900px){
+    #furyBanner{
+      top:max(34px,env(safe-area-inset-top) + 28px);
+      padding:6px 10px 5px;
+      font-size:10px;
+      max-width:70vw;
+    }
+    #furyBanner small{
+      font-size:8px;
+      letter-spacing:.08em;
+    }
+  }
+
 </style>
 </head>
 <body>
 <div id="wrap">
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
+<div id="furyBanner">UNERMESSLICHE WUT<small>KOPF AB MÖGLICH</small></div>
 
 
 
@@ -265,11 +326,13 @@ const scoreEl = document.getElementById('score');
 const aliveEl = document.getElementById('alive');
 const timeLeftEl = document.getElementById('timeLeft');
 const narratorText = document.getElementById('narratorText');
+const furyBanner = document.getElementById('furyBanner');
 const eventlog = document.getElementById('eventlog');
 const summary = document.getElementById('summary');
 const musicToggle = document.getElementById('musicToggle');
 const rageMobile = document.getElementById('rageMobile');
 const scoreMobile = document.getElementById('scoreMobile');
+const mobileHud = document.getElementById('mobileHud');
 const aliveMobile = document.getElementById('aliveMobile');
 const timeMobile = document.getElementById('timeMobile');
 
@@ -349,8 +412,8 @@ function showThreatHint(text){
 
 let running=false, last=0, gameTime=60, score=0, kills=0, decaps=0, disrupted=0;
 let narratorTimer=0, currentNarration='';
-let shake=0, fogPulse=0;
-let blood=[], feathers=[], snow=[], corpses=[];
+let shake=0, fogPulse=0, decapFlash=0;
+let blood=[], feathers=[], snow=[], corpses=[], decapBursts=[];
 let player, birds=[];
 
 function rnd(a,b){return a+Math.random()*(b-a)}
@@ -476,7 +539,7 @@ function makeBird(i){
 }
 function resetGame(){
   gameTime=60; score=0;kills=0;decaps=0;disrupted=0;
-  blood=[];feathers=[];corpses=[];eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
+  blood=[];feathers=[];corpses=[];decapBursts=[]; decapFlash=0; eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
   player=makePlayer();
   birds=Array.from({length:7},(_,i)=>makeBird(i));
   makeSnow();
@@ -502,25 +565,97 @@ function spawnBlood(x,y,n=8){
 function spawnFeathers(x,y,n=7){
   for(let i=0;i<n;i++) feathers.push({x,y,vx:rnd(-80,80),vy:rnd(-100,20),life:rnd(1,2),rot:rnd(0,6.2),vr:rnd(-4,4)});
 }
+
+function triggerDecapitation(b,nx,ny){
+  if(!b.head) return;
+  b.head=false;
+  decaps++;
+  sfxDeath();
+
+  // violent spray from the neck
+  for(let i=0;i<28;i++){
+    blood.push({
+      x:b.x+nx*18,
+      y:b.y-10+rnd(-6,6),
+      vx:nx*rnd(90,260)+rnd(-90,90),
+      vy:rnd(-220,20),
+      life:rnd(.35,1.0),
+      s:rnd(2.5,6.0)
+    });
+  }
+  spawnBlood(b.x+nx*8,b.y-12,18);
+  spawnFeathers(b.x,b.y,14);
+
+  // detached head projectile
+  const head={
+    x:b.x+nx*16,
+    y:b.y-8,
+    vx:nx*220+rnd(-40,40),
+    vy:-140+rnd(-35,20),
+    life:8,
+    r:10,
+    rot:0,
+    vr:rnd(-9,9)
+  };
+  blood.push({...head,isHead:true,s:10});
+
+  // brief explicit decap animation effect
+  decapBursts.push({x:b.x+nx*16,y:b.y-10,life:.55,size:32});
+  decapBursts.push({x:b.x+nx*16,y:b.y-10,life:.38,size:54});
+  decapBursts.push({x:b.x+nx*16,y:b.y-10,life:.28,size:76});
+  decapFlash=1;
+
+  const c=corpses.find(c=>Math.hypot(c.x-b.x,c.y-b.y)<5);
+  if(c)c.head=false;
+
+  addScore(750,'Kopf abgerissen');
+  shake=18;
+  player.locked=.10;
+  player.rage=clamp(player.rage+6,0,100);
+  narrate('Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.',5,true);
+}
 function attack(){
   if(player.attackCd>0 || player.locked>0) return;
   sfxAttack();
-  player.attackCd=.48;
-  let candidates=birds.filter(b=>b.alive && dist(player,b)<78).sort((a,b)=>dist(player,a)-dist(player,b));
+  player.attackCd=.44;
+
+  let candidates=birds
+    .filter(b=>dist(player,b)<82 && (b.alive || b.head))
+    .sort((a,b)=>{
+      const ap=(!a.alive && a.head && player.rage>=68)?-1000:0;
+      const bp=(!b.alive && b.head && player.rage>=68)?-1000:0;
+      return (dist(player,a)+ap)-(dist(player,b)+bp);
+    });
+
   if(!candidates.length){
-    player.rage=clamp(player.rage-1,0,100); shake=2; return;
+    player.rage=clamp(player.rage-.5,0,100); shake=2; return;
   }
+
   let b=candidates[0];
   player.target=b;
   const dx=b.x-player.x,dy=b.y-player.y; const [nx,ny]=norm(dx,dy);
   player.x+=nx*10;player.y+=ny*10;
-  let dmg=22 + player.rage*.22;
-  if(b.down) dmg*=1.25;
+
+  // Dead body: a second explicit attack can tear off the head.
+  if(!b.alive && b.head){
+    if(player.rage>=68){
+      triggerDecapitation(b,nx,ny);
+    }else{
+      shake=4;
+      spawnBlood(b.x+nx*10,b.y-8,4);
+      player.rage=clamp(player.rage+2,0,100);
+      narrate('Noch reicht die Kampfwut nicht aus.',1.8,true);
+    }
+    return;
+  }
+
+  let dmg=24 + player.rage*.24;
+  if(b.down) dmg*=1.28;
   b.hp-=dmg; b.hitFlash=.15; sfxHit();
   spawnFeathers(b.x,b.y,6);
   if(b.hp<65) spawnBlood(b.x,b.y,4);
-  shake=5+player.rage*.06;
-  player.rage=clamp(player.rage+9,0,100);
+  shake=5+player.rage*.07;
+  player.rage=clamp(player.rage+11,0,100);
 
   if(!b.doom){
     b.doom=true;
@@ -536,21 +671,11 @@ function attack(){
   }
 
   if(b.hp<=0 && b.alive){
-    b.hp=0;b.alive=false;kills++; sfxDeath();
-    spawnBlood(b.x,b.y,15);spawnFeathers(b.x,b.y,14);
+    b.hp=0;b.alive=false;b.down=true;kills++; sfxDeath();
+    spawnBlood(b.x,b.y,18);spawnFeathers(b.x,b.y,14);
     addScore(500,'Birkhahn getötet');
     corpses.push({x:b.x,y:b.y,head:true,age:0,cleared:false});
     narrate('Es ist kaum zu glauben, dass ein Vogel zu solch einer grausamen Tat fähig ist.',4,true);
-  } else if(!b.alive && b.head && player.rage>72 && dist(player,b)<70){
-    b.head=false;decaps++;
-    spawnBlood(b.x,b.y-10,18);spawnFeathers(b.x,b.y,12);
-    const head={x:b.x+nx*18,y:b.y+ny*18,vx:nx*180+rnd(-40,40),vy:ny*180-110,life:8,r:8};
-    blood.push({...head,isHead:true,s:8});
-    const c=corpses.find(c=>Math.hypot(c.x-b.x,c.y-b.y)<4);
-    if(c)c.head=false;
-    addScore(750,'Kopf abgerissen');
-    shake=12;
-    narrate('Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.',5,true);
   }
 }
 
@@ -574,7 +699,7 @@ function threaten(){
   });
   if(affected){
     addScore(60*affected,'Balz gestört');
-    player.rage=clamp(player.rage+Math.min(8,affected*1.5),0,100);
+    player.rage=clamp(player.rage+Math.min(10,affected*1.8),0,100);
     narrate(fled
       ? `Der Rackelhahn droht. ${fled} Birkhahn${fled===1?'':'e'} weicht aus.`
       : 'Der Rackelhahn droht. Die mutigen Hähne halten den Balzplatz.',3.2,true);
@@ -610,12 +735,12 @@ function updatePlayer(dt){
   birds.forEach(b=>{
     if(b.alive && b.state==='balz'){
       const d=dist(player,b);
-      if(d<220) nearBalz += (220-d)/220 * (.6+b.courtship);
-      if(d<90 && b.courage>.65) player.rage += 3.6*dt;
+      if(d<240) nearBalz += (240-d)/240 * (.7+b.courtship*.95);
+      if(d<100 && b.courage>.65) player.rage += 4.5*dt;
     }
   });
-  player.rage += nearBalz*1.5*dt;
-  player.rage -= (nearBalz<.15 ? 4.2 : 1.0)*dt;
+  player.rage += nearBalz*1.95*dt;
+  player.rage -= (nearBalz<.15 ? 3.5 : 0.8)*dt;
   player.rage=clamp(player.rage,0,100);
 
   // High-rage fixation: subtle involuntary drift toward nearest brave target.
@@ -697,7 +822,8 @@ function updateParticles(dt){
   blood.forEach(p=>{
     if(p.isHead){
       p.vy+=240*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.987;
-      if(p.y>H-42){p.y=H-42;p.vy*=-.22;p.vx*=.65}
+      p.rot=(p.rot||0)+(p.vr||0)*dt;
+      if(p.y>H-42){p.y=H-42;p.vy*=-.22;p.vx*=.65;p.vr*=.82;}
       p.life-=dt;
     } else {
       p.vy+=260*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
@@ -706,6 +832,10 @@ function updateParticles(dt){
   blood=blood.filter(p=>p.life>0);
   feathers.forEach(f=>{f.vy+=35*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.rot+=f.vr*dt;f.life-=dt});
   feathers=feathers.filter(f=>f.life>0);
+
+  decapBursts.forEach(d=>d.life-=dt);
+  decapBursts=decapBursts.filter(d=>d.life>0);
+  decapFlash=Math.max(0,decapFlash-dt*2.2);
 }
 
 function update(dt){
@@ -750,6 +880,12 @@ function updateUI(){
   scoreMobile.textContent=score;
   aliveMobile.textContent=aliveNow;
   timeMobile.textContent=timeNow;
+
+  const furyOn = player.rage >= 68;
+  furyBanner.classList.toggle('active', furyOn);
+  rageMobile.classList.toggle('furyOn', furyOn);
+  rageText.classList.toggle('furyOn', furyOn);
+  mobileHud.classList.toggle('furyOn', furyOn);
 }
 
 function drawGround(){
@@ -888,6 +1024,11 @@ function render(){
   drawParticles();
   drawFog();
   ctx.restore();
+
+  if(decapFlash>0){
+    ctx.fillStyle=`rgba(120,0,0,${decapFlash*.14})`;
+    ctx.fillRect(0,0,W,H);
+  }
 
   // fixation vignette
   if(player.rage>82){
