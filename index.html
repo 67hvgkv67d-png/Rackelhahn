@@ -78,6 +78,10 @@
         <input id="voiceToggle" type="checkbox" checked>
         Erzähler vorlesen
       </label>
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-top:4px">
+        <input id="musicToggle" type="checkbox" checked>
+        Düstere Musik
+      </label>
     </div>
   </div>
   <div id="help" class="panel">
@@ -106,7 +110,7 @@
     <div id="intro">
       <h1>RACKELHAHN</h1>
       <div class="sub">Ein unfruchtbarer Bastard — spielbarer HTML-Prototyp</div>
-      <p><b>Erzähler:</b> Die eingeblendeten Naturdoku-Texte werden automatisch von einer deutschen Systemstimme vorgelesen. Du kannst das oben jederzeit abschalten.</p><p><b>Am Handy:</b> links mit dem virtuellen Stick bewegen, rechts <b>ANGREIFEN</b> oder <b>DROHEN</b>. Drohen unterbricht die Balz und kann nahe Birkhähne zur Flucht bringen.</p><p>Du spielst den Rackelhahn auf einem Balzplatz im Teufelsmoor. Die Birkhähne balzen selbstständig. Mutige Tiere wagen sich näher an dich heran. Nähe, Balz und rote Rosen steigern deine Kampfwut.</p>
+      <p><b>Erzähler:</b> Wichtige Naturdoku-Passagen werden vollständig nacheinander vorgelesen. Aktionen und Tastendrücke unterbrechen die Stimme nicht. Die düstere Hintergrundmusik kann oben separat abgeschaltet werden.</p><p><b>Am Handy:</b> links mit dem virtuellen Stick bewegen, rechts <b>ANGREIFEN</b> oder <b>DROHEN</b>. Drohen unterbricht die Balz und kann nahe Birkhähne zur Flucht bringen.</p><p>Du spielst den Rackelhahn auf einem Balzplatz im Teufelsmoor. Die Birkhähne balzen selbstständig. Mutige Tiere wagen sich näher an dich heran. Nähe, Balz und rote Rosen steigern deine Kampfwut.</p>
       <div class="grid">
         <div class="box"><b>Dein Ziel</b><br><span style="color:#b8c2c8">Störe die Balz, dominiere das Gebiet und eskaliere Kämpfe. Hohe Kampfwut macht dich stärker, aber schwerer kontrollierbar.</span></div>
         <div class="box"><b>Absichtlich roh</b><br><span style="color:#b8c2c8">Noch keine fertigen Grafiken oder Animationen: Der Prototyp testet erst die Mechanik und den Naturdoku-Rhythmus.</span></div>
@@ -145,6 +149,7 @@ const narratorText = document.getElementById('narratorText');
 const eventlog = document.getElementById('eventlog');
 const summary = document.getElementById('summary');
 const voiceToggle = document.getElementById('voiceToggle');
+const musicToggle = document.getElementById('musicToggle');
 
 const joystick = document.getElementById('joystick');
 const stick = document.getElementById('stick');
@@ -226,6 +231,10 @@ function norm(x,y){const m=Math.hypot(x,y)||1; return [x/m,y/m]}
 
 let narrationVoice = null;
 let speechUnlocked = false;
+let speechQueue = [];
+let speechBusy = false;
+let speakingText = '';
+const speechLastQueued = new Map();
 
 function chooseGermanVoice(){
   if(!('speechSynthesis' in window)) return;
@@ -233,7 +242,6 @@ function chooseGermanVoice(){
   const german = voices.filter(v => /^de(-|_)/i.test(v.lang || ''));
   if(!german.length){ narrationVoice = null; return; }
 
-  // Prefer a natural-sounding German system voice where available.
   const preferred = german.find(v => /anna|petra|markus|vicki|katja|conrad|stefan|yannick|google deutsch/i.test(v.name))
                  || german.find(v => v.localService)
                  || german[0];
@@ -248,29 +256,129 @@ if('speechSynthesis' in window){
 function unlockSpeech(){
   if(!('speechSynthesis' in window)) return;
   speechUnlocked = true;
-  // A zero-volume utterance during the user's click helps unlock speech on mobile Safari.
   const u = new SpeechSynthesisUtterance(' ');
   u.lang = 'de-DE';
   u.volume = 0;
   speechSynthesis.speak(u);
 }
 
-function speakNarration(text){
+function clearSpeechQueue(cancelCurrent=true){
+  speechQueue = [];
+  speechLastQueued.clear();
+  if(cancelCurrent && 'speechSynthesis' in window) speechSynthesis.cancel();
+  speechBusy = false;
+  speakingText = '';
+}
+
+function pumpSpeechQueue(){
   if(!speechUnlocked || !voiceToggle.checked || !('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
+  if(speechBusy || !speechQueue.length) return;
+
+  const text = speechQueue.shift();
+  speechBusy = true;
+  speakingText = text;
+
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'de-DE';
   if(narrationVoice) u.voice = narrationVoice;
-  u.rate = 0.82;
-  u.pitch = 0.86;
+  u.rate = 0.80;
+  u.pitch = 0.84;
   u.volume = 0.95;
+
+  const done = () => {
+    speechBusy = false;
+    speakingText = '';
+    setTimeout(pumpSpeechQueue, 180);
+  };
+  u.onend = done;
+  u.onerror = done;
   speechSynthesis.speak(u);
 }
 
+function queueNarration(text){
+  if(!speechUnlocked || !voiceToggle.checked || !('speechSynthesis' in window)) return;
+
+  // Don't pile up identical commentary when several birds trigger the same event.
+  const now = performance.now();
+  const last = speechLastQueued.get(text) || -Infinity;
+  if(now-last < 9000) return;
+  if(text === speakingText || speechQueue.includes(text)) return;
+
+  speechLastQueued.set(text, now);
+  if(speechQueue.length < 5) speechQueue.push(text);
+  pumpSpeechQueue();
+}
+
 voiceToggle.addEventListener('change', () => {
-  if(!voiceToggle.checked && 'speechSynthesis' in window) speechSynthesis.cancel();
-  if(voiceToggle.checked && currentNarration) speakNarration(currentNarration);
+  if(!voiceToggle.checked){
+    clearSpeechQueue(true);
+  }
 });
+
+
+let audioCtx=null, musicMaster=null, musicFilter=null, musicNodes=[];
+
+function startMusic(){
+  if(!musicToggle.checked) return;
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    audioCtx = new AC();
+
+    musicMaster = audioCtx.createGain();
+    musicMaster.gain.value = 0.0001;
+
+    musicFilter = audioCtx.createBiquadFilter();
+    musicFilter.type = 'lowpass';
+    musicFilter.frequency.value = 420;
+    musicFilter.Q.value = 0.7;
+    musicFilter.connect(musicMaster);
+    musicMaster.connect(audioCtx.destination);
+
+    const freqs=[55,82.41,110];
+    freqs.forEach((f,i)=>{
+      const osc=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      osc.type=i===0?'sine':'triangle';
+      osc.frequency.value=f;
+      osc.detune.value=i===2?-9:(i===1?6:0);
+      g.gain.value=i===0?0.42:0.16;
+      osc.connect(g); g.connect(musicFilter); osc.start();
+      musicNodes.push(osc,g);
+    });
+
+    const lfo=audioCtx.createOscillator();
+    const lfoGain=audioCtx.createGain();
+    lfo.type='sine'; lfo.frequency.value=0.075; lfoGain.gain.value=110;
+    lfo.connect(lfoGain); lfoGain.connect(musicFilter.frequency); lfo.start();
+    musicNodes.push(lfo,lfoGain);
+  }
+
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  const t=audioCtx.currentTime;
+  musicMaster.gain.cancelScheduledValues(t);
+  musicMaster.gain.setValueAtTime(Math.max(.0001,musicMaster.gain.value),t);
+  musicMaster.gain.exponentialRampToValueAtTime(0.032,t+1.2);
+}
+
+function stopMusic(){
+  if(!audioCtx || !musicMaster) return;
+  const t=audioCtx.currentTime;
+  musicMaster.gain.cancelScheduledValues(t);
+  musicMaster.gain.setValueAtTime(Math.max(.0001,musicMaster.gain.value),t);
+  musicMaster.gain.exponentialRampToValueAtTime(.0001,t+.45);
+}
+
+function updateMusic(){
+  if(!audioCtx || !musicMaster || !musicToggle.checked || !running) return;
+  const rage=player ? player.rage/100 : 0;
+  const target=.022 + rage*.022;
+  const t=audioCtx.currentTime;
+  musicMaster.gain.setTargetAtTime(target,t,.35);
+  musicFilter.frequency.setTargetAtTime(330+rage*250,t,.4);
+}
+
+musicToggle.addEventListener('change',()=> musicToggle.checked ? startMusic() : stopMusic());
 
 function logEvent(t){
   const div=document.createElement('div');
@@ -279,12 +387,12 @@ function logEvent(t){
   eventlog.prepend(div);
   while(eventlog.children.length>9) eventlog.removeChild(eventlog.lastChild);
 }
-function narrate(text, seconds=3.7, force=false){
+function narrate(text, seconds=3.7, force=false, speak=true){
   if(!force && narratorTimer>0.45) return;
   currentNarration=text;
   narratorText.textContent=text;
   narratorTimer=seconds;
-  speakNarration(text);
+  if(speak) queueNarration(text);
 }
 function addScore(n,label){
   score+=n; scoreEl.textContent=score;
@@ -308,6 +416,7 @@ function makeBird(i){
   };
 }
 function resetGame(){
+  if(speechUnlocked) clearSpeechQueue(true);
   gameTime=60; score=0;kills=0;decaps=0;disrupted=0;
   blood=[];feathers=[];corpses=[];eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
   player=makePlayer();
@@ -322,8 +431,10 @@ resetGame();
 
 function start(){
   unlockSpeech();
+  startMusic();
   running=true; overlay.style.display='none'; last=performance.now();
-  setTimeout(()=>narrate('Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor.',4,true),120);
+  narrate('Über Nacht ist das Wetter umgeschlagen.',4,true,true);
+  setTimeout(()=>narrate('Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor.',4,true,true),450);
 }
 startBtn.onclick=start;
 againBtn.onclick=()=>{resetGame();start()};
@@ -407,10 +518,10 @@ function threaten(){
     player.rage=clamp(player.rage+Math.min(8,affected*1.5),0,100);
     narrate(fled
       ? `Der Rackelhahn droht. ${fled} Birkhahn${fled===1?'':'e'} weicht aus.`
-      : 'Der Rackelhahn droht. Die mutigen Hähne halten den Balzplatz.',3.2,true);
+      : 'Der Rackelhahn droht. Die mutigen Hähne halten den Balzplatz.',3.2,true,false);
     showThreatHint(`${affected} Hahn${affected===1?'':'e'} betroffen · ${fled} flieht`);
   } else {
-    narrate('Der Rackelhahn droht ins leere Moor. Kein Birkhahn ist nah genug.',2.8,true);
+    narrate('Der Rackelhahn droht ins leere Moor. Kein Birkhahn ist nah genug.',2.8,true,false);
     showThreatHint('Kein Birkhahn in Droh-Reichweite');
   }
 }
@@ -546,13 +657,14 @@ function update(dt){
   updatePlayer(dt);
   birds.forEach(b=>updateBird(b,dt));
   updateParticles(dt);
+  updateMusic();
   threatWave=Math.max(0,threatWave-dt*2.3);
 
   const aliveNow=birds.filter(b=>b.alive).length;
   if(aliveNow===0){
     if(allDeadCountdown<0){
-      allDeadCountdown=1.6;
-      narrate('Auf dem Balzplatz ist kein Birkhahn mehr übrig.',1.6,true);
+      allDeadCountdown=2.4;
+      narrate('Auf dem Balzplatz ist kein Birkhahn mehr übrig.',2.4,true,true);
     } else {
       allDeadCountdown-=dt;
       if(allDeadCountdown<=0){endGame('all_dead');return;}
@@ -718,7 +830,7 @@ function render(){
 
 function endGame(reason='time'){
   running=false;
-  if('speechSynthesis' in window) speechSynthesis.cancel();
+  stopMusic();
   const alive=birds.filter(b=>b.alive).length;
   summary.innerHTML=
    `<b>${reason==='all_dead'?'Balzplatz vollständig geräumt':'Tagesbilanz'}</b><br><br>
