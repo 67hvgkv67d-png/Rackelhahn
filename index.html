@@ -178,6 +178,11 @@
   }
 }
 
+
+@media (pointer:coarse), (max-width:900px){
+  #wrap, canvas, #touchControls, #joystick, .touchBtn{touch-action:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -287,29 +292,6 @@ let threatWave = 0;
 
 
 
-function mobileGameMode(){
-  return matchMedia('(pointer:coarse)').matches || Math.min(innerWidth,innerHeight)<700;
-}
-function portraitBlocked(){
-  return mobileGameMode() && innerHeight>innerWidth;
-}
-async function requestLandscape(){
-  if(!mobileGameMode()) return;
-  try{
-    if(document.documentElement.requestFullscreen && !document.fullscreenElement){
-      await document.documentElement.requestFullscreen({navigationUI:'hide'});
-    }
-  }catch(e){}
-  try{
-    if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-  }catch(e){}
-}
-function playBounds(){
-  if(mobileGameMode() && W>H){
-    return {left:105,right:W-150,top:43,bottom:H-72};
-  }
-  return {left:35,right:W-35,top:95,bottom:H-55};
-}
 
 let W=0,H=0,dpr=1;
 function resize(){
@@ -381,27 +363,27 @@ function isMobileGame(){
 }
 function mobileSafeBounds(){
   if(!isMobileGame()) return {l:35,r:W-35,t:72,b:H-70};
-  return {l:72,r:W-72,t:62,b:H-92};
+  return {l:42,r:W-42,t:54,b:H-108};
 }
 
 
 
 let audioCtx=null, musicMaster=null, musicFilter=null, musicNodes=[];
 
-let sfxCtx=null;
 
-function ensureSfx(){
-  if(!sfxCtx){
-    const AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC) return null;
-    sfxCtx=new AC();
+
+function unlockAudio(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!audioCtx && AC) audioCtx=new AC();
+  if(audioCtx && audioCtx.state==='suspended'){
+    // Called directly inside the user's Start tap/click.
+    audioCtx.resume().catch(()=>{});
   }
-  if(sfxCtx.state==='suspended') sfxCtx.resume();
-  return sfxCtx;
+  return audioCtx;
 }
 
 function tone(freq=180,dur=.12,type='sine',vol=.08,slide=0){
-  const ac=ensureSfx(); if(!ac) return;
+  const ac=unlockAudio(); if(!ac) return;
   const t=ac.currentTime;
   const o=ac.createOscillator(), g=ac.createGain();
   o.type=type; o.frequency.setValueAtTime(freq,t);
@@ -413,7 +395,7 @@ function tone(freq=180,dur=.12,type='sine',vol=.08,slide=0){
 }
 
 function noiseBurst(dur=.16,vol=.08,lowpass=1200){
-  const ac=ensureSfx(); if(!ac) return;
+  const ac=unlockAudio(); if(!ac) return;
   const len=Math.max(1,Math.floor(ac.sampleRate*dur));
   const buf=ac.createBuffer(1,len,ac.sampleRate);
   const d=buf.getChannelData(0);
@@ -443,11 +425,9 @@ function sfxDeath(){
 
 function startMusic(){
   if(!musicToggle.checked) return;
-  if(!audioCtx){
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    audioCtx = new AC();
-
+  const ac=unlockAudio();
+  if(!ac) return;
+  if(!musicMaster){
     musicMaster = audioCtx.createGain();
     musicMaster.gain.value = 0.0001;
 
@@ -550,9 +530,8 @@ function resetGame(){
 }
 resetGame();
 
-async function start(){
-  ensureSfx();
-  await requestLandscape();
+function start(){
+  unlockAudio();
   startMusic();
   running=true; overlay.style.display='none'; last=performance.now();
   narrate('Über Nacht ist das Wetter umgeschlagen.',4,true);
@@ -775,7 +754,6 @@ function updateParticles(dt){
 
 function update(dt){
   if(!running)return;
-  if(portraitBlocked()) return;
   gameTime-=dt;
   narratorTimer-=dt;
   fogPulse=Math.max(0,fogPulse-dt);
