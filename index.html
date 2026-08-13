@@ -70,7 +70,6 @@
 
   /* Mobile game HUD: landscape-first, minimal and unobtrusive */
   #mobileHud{display:none}
-  #rotateNotice{display:none;position:absolute;inset:0;z-index:10000;background:#070a0c;color:#eef2f4;align-items:center;justify-content:center;text-align:center;padding:28px;font-family:Georgia,serif}
   #rotateNotice .rotateInner{max-width:420px}
   #rotateNotice .rotateIcon{font-size:52px;margin-bottom:12px}
   #rotateNotice b{font-size:24px;display:block;margin-bottom:8px}
@@ -92,12 +91,92 @@
   }
 
   @media (pointer:coarse) and (orientation:portrait){
-    #rotateNotice{display:flex}
-  }
+    }
 
   @media (pointer:coarse) and (orientation:landscape){
-    #rotateNotice{display:none}
+    }
+
+
+/* Mobile portrait game UI */
+@media (pointer:coarse), (max-width:900px){
+  #topbar{
+    left:8px; right:8px; top:max(6px,env(safe-area-inset-top));
+    display:block;
   }
+  #stats{
+    width:auto!important; min-width:0!important;
+    padding:6px 9px!important;
+    border-radius:9px!important;
+    font-size:10px!important;
+    line-height:1.25!important;
+    background:rgba(8,12,14,.58)!important;
+    backdrop-filter:blur(4px)!important;
+  }
+  #stats > b,
+  #stats .meter,
+  #stats label,
+  #stats div:nth-of-type(1){
+    display:none!important;
+  }
+  #stats div:nth-of-type(2){
+    margin:0!important;
+    display:block!important;
+    white-space:nowrap;
+  }
+  #help{display:none!important}
+
+  #narrator{
+    left:50%!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:calc(100% - 148px)!important;
+    transform:translateX(-50%)!important;
+    z-index:8;
+  }
+  #narrator .panel{
+    padding:7px 10px!important;
+    border-radius:8px!important;
+    font-size:13px!important;
+    line-height:1.25!important;
+    background:rgba(7,10,12,.70)!important;
+    border:1px solid rgba(255,255,255,.08)!important;
+    box-shadow:none!important;
+  }
+  #narrator small{
+    font-size:8px!important;
+    letter-spacing:.09em!important;
+    margin-bottom:2px!important;
+  }
+
+  #touchControls{display:block!important}
+  #joystick{
+    left:10px!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    width:92px!important;height:92px!important;
+    background:rgba(12,17,20,.42)!important;
+  }
+  #stick{width:38px!important;height:38px!important}
+  #touchButtons{
+    right:10px!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    grid-template-columns:62px!important;
+    gap:7px!important;
+  }
+  .touchBtn{
+    width:62px!important;height:42px!important;
+    padding:0!important;
+    border-radius:11px!important;
+    font-size:9px!important;
+    letter-spacing:.02em!important;
+    background:rgba(13,18,21,.70)!important;
+  }
+  #eventlog{display:none!important}
+  #threatHint{
+    top:48px!important;
+    max-width:70vw;
+    font-size:10px!important;
+    padding:5px 8px!important;
+  }
+}
 
 </style>
 </head>
@@ -105,7 +184,7 @@
 <div id="wrap">
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
-<div id="rotateNotice"><div class="rotateInner"><div class="rotateIcon">↻</div><b>Bitte ins Breitformat drehen</b><span>Die mobile Version ist für Querformat gebaut. Im Hochformat bleibt das Spiel pausiert, damit das Interface die Spielfläche nicht verdeckt.</span></div></div>
+
 
 
 <div id="topbar">
@@ -116,10 +195,7 @@
     <div style="margin-top:7px">Punkte: <span id="score">0</span> · Birkhähne: <span id="alive">0</span> · Fortpflanzungserfolg: <b>0</b></div>
     <div>Zeit bis Nacht: <span id="timeLeft">01:00</span></div>
     <div style="margin-top:7px;pointer-events:auto">
-      <label style="display:flex;align-items:center;gap:7px;cursor:pointer">
-        <input id="voiceToggle" type="checkbox" checked>
-        Erzähler vorlesen
-      </label>
+      
       <label style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-top:4px">
         <input id="musicToggle" type="checkbox" checked>
         Düstere Musik
@@ -186,7 +262,6 @@ const timeLeftEl = document.getElementById('timeLeft');
 const narratorText = document.getElementById('narratorText');
 const eventlog = document.getElementById('eventlog');
 const summary = document.getElementById('summary');
-const voiceToggle = document.getElementById('voiceToggle');
 const musicToggle = document.getElementById('musicToggle');
 const rageMobile = document.getElementById('rageMobile');
 const scoreMobile = document.getElementById('scoreMobile');
@@ -301,95 +376,70 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function norm(x,y){const m=Math.hypot(x,y)||1; return [x/m,y/m]}
 
-
-let narrationVoice = null;
-let speechUnlocked = false;
-let speechQueue = [];
-let speechBusy = false;
-let speakingText = '';
-const speechLastQueued = new Map();
-
-function chooseGermanVoice(){
-  if(!('speechSynthesis' in window)) return;
-  const voices = speechSynthesis.getVoices();
-  const german = voices.filter(v => /^de(-|_)/i.test(v.lang || ''));
-  if(!german.length){ narrationVoice = null; return; }
-
-  const preferred = german.find(v => /anna|petra|markus|vicki|katja|conrad|stefan|yannick|google deutsch/i.test(v.name))
-                 || german.find(v => v.localService)
-                 || german[0];
-  narrationVoice = preferred;
+function isMobileGame(){
+  return matchMedia('(pointer:coarse)').matches || innerWidth<=900;
+}
+function mobileSafeBounds(){
+  if(!isMobileGame()) return {l:35,r:W-35,t:72,b:H-70};
+  return {l:72,r:W-72,t:62,b:H-92};
 }
 
-if('speechSynthesis' in window){
-  chooseGermanVoice();
-  speechSynthesis.onvoiceschanged = chooseGermanVoice;
-}
-
-function unlockSpeech(){
-  if(!('speechSynthesis' in window)) return;
-  speechUnlocked = true;
-  const u = new SpeechSynthesisUtterance(' ');
-  u.lang = 'de-DE';
-  u.volume = 0;
-  speechSynthesis.speak(u);
-}
-
-function clearSpeechQueue(cancelCurrent=true){
-  speechQueue = [];
-  speechLastQueued.clear();
-  if(cancelCurrent && 'speechSynthesis' in window) speechSynthesis.cancel();
-  speechBusy = false;
-  speakingText = '';
-}
-
-function pumpSpeechQueue(){
-  if(!speechUnlocked || !voiceToggle.checked || !('speechSynthesis' in window)) return;
-  if(speechBusy || !speechQueue.length) return;
-
-  const text = speechQueue.shift();
-  speechBusy = true;
-  speakingText = text;
-
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'de-DE';
-  if(narrationVoice) u.voice = narrationVoice;
-  u.rate = 0.80;
-  u.pitch = 0.84;
-  u.volume = 0.95;
-
-  const done = () => {
-    speechBusy = false;
-    speakingText = '';
-    setTimeout(pumpSpeechQueue, 180);
-  };
-  u.onend = done;
-  u.onerror = done;
-  speechSynthesis.speak(u);
-}
-
-function queueNarration(text){
-  if(!speechUnlocked || !voiceToggle.checked || !('speechSynthesis' in window)) return;
-
-  // Don't pile up identical commentary when several birds trigger the same event.
-  const now = performance.now();
-  const last = speechLastQueued.get(text) || -Infinity;
-  if(now-last < 9000) return;
-  if(text === speakingText || speechQueue.includes(text)) return;
-
-  speechLastQueued.set(text, now);
-  if(speechQueue.length < 5) speechQueue.push(text);
-  pumpSpeechQueue();
-}
-
-voiceToggle.addEventListener('change', () => {
-  if(!voiceToggle.checked){
-    clearSpeechQueue(true);
-  }
-});
 
 
 let audioCtx=null, musicMaster=null, musicFilter=null, musicNodes=[];
+
+let sfxCtx=null;
+
+function ensureSfx(){
+  if(!sfxCtx){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC) return null;
+    sfxCtx=new AC();
+  }
+  if(sfxCtx.state==='suspended') sfxCtx.resume();
+  return sfxCtx;
+}
+
+function tone(freq=180,dur=.12,type='sine',vol=.08,slide=0){
+  const ac=ensureSfx(); if(!ac) return;
+  const t=ac.currentTime;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),t+dur);
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+dur+.03);
+}
+
+function noiseBurst(dur=.16,vol=.08,lowpass=1200){
+  const ac=ensureSfx(); if(!ac) return;
+  const len=Math.max(1,Math.floor(ac.sampleRate*dur));
+  const buf=ac.createBuffer(1,len,ac.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+  const src=ac.createBufferSource(), filter=ac.createBiquadFilter(), g=ac.createGain();
+  src.buffer=buf; filter.type='lowpass'; filter.frequency.value=lowpass; g.gain.value=vol;
+  src.connect(filter); filter.connect(g); g.connect(ac.destination); src.start();
+}
+
+function sfxThreat(){
+  tone(115,.22,'sawtooth',.045,-45);
+  setTimeout(()=>tone(88,.18,'triangle',.035,-20),70);
+}
+function sfxAttack(){
+  noiseBurst(.10,.065,950);
+  tone(170,.09,'square',.035,-90);
+}
+function sfxHit(){
+  tone(92,.12,'triangle',.055,-35);
+  noiseBurst(.08,.045,620);
+}
+function sfxDeath(){
+  tone(105,.34,'sawtooth',.055,-70);
+  setTimeout(()=>noiseBurst(.24,.05,500),45);
+}
+
 
 function startMusic(){
   if(!musicToggle.checked) return;
@@ -460,12 +510,11 @@ function logEvent(t){
   eventlog.prepend(div);
   while(eventlog.children.length>9) eventlog.removeChild(eventlog.lastChild);
 }
-function narrate(text, seconds=3.7, force=false, speak=true){
+function narrate(text, seconds=3.7, force=false){
   if(!force && narratorTimer>0.45) return;
   currentNarration=text;
   narratorText.textContent=text;
   narratorTimer=seconds;
-  if(speak) queueNarration(text);
 }
 function addScore(n,label){
   score+=n; scoreEl.textContent=score; if(scoreMobile) scoreMobile.textContent=score;
@@ -489,7 +538,6 @@ function makeBird(i){
   };
 }
 function resetGame(){
-  if(speechUnlocked) clearSpeechQueue(true);
   gameTime=60; score=0;kills=0;decaps=0;disrupted=0;
   blood=[];feathers=[];corpses=[];eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
   player=makePlayer();
@@ -503,12 +551,12 @@ function resetGame(){
 resetGame();
 
 async function start(){
+  ensureSfx();
   await requestLandscape();
-  unlockSpeech();
   startMusic();
   running=true; overlay.style.display='none'; last=performance.now();
-  narrate('Über Nacht ist das Wetter umgeschlagen.',4,true,true);
-  setTimeout(()=>narrate('Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor.',4,true,true),450);
+  narrate('Über Nacht ist das Wetter umgeschlagen.',4,true);
+  setTimeout(()=>narrate('Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor.',4,true),450);
 }
 startBtn.onclick=start;
 againBtn.onclick=()=>{resetGame();start()};
@@ -521,6 +569,7 @@ function spawnFeathers(x,y,n=7){
 }
 function attack(){
   if(player.attackCd>0 || player.locked>0) return;
+  sfxAttack();
   player.attackCd=.48;
   let candidates=birds.filter(b=>b.alive && dist(player,b)<78).sort((a,b)=>dist(player,a)-dist(player,b));
   if(!candidates.length){
@@ -532,7 +581,7 @@ function attack(){
   player.x+=nx*10;player.y+=ny*10;
   let dmg=22 + player.rage*.22;
   if(b.down) dmg*=1.25;
-  b.hp-=dmg; b.hitFlash=.15;
+  b.hp-=dmg; b.hitFlash=.15; sfxHit();
   spawnFeathers(b.x,b.y,6);
   if(b.hp<65) spawnBlood(b.x,b.y,4);
   shake=5+player.rage*.06;
@@ -552,7 +601,7 @@ function attack(){
   }
 
   if(b.hp<=0 && b.alive){
-    b.hp=0;b.alive=false;kills++;
+    b.hp=0;b.alive=false;kills++; sfxDeath();
     spawnBlood(b.x,b.y,15);spawnFeathers(b.x,b.y,14);
     addScore(500,'Birkhahn getötet');
     corpses.push({x:b.x,y:b.y,head:true,age:0,cleared:false});
@@ -572,6 +621,7 @@ function attack(){
 
 function threaten(){
   if(player.threatCd>0||player.locked>0)return;
+  sfxThreat();
   player.threatCd=1.1; shake=4; threatWave=1;
   let affected=0, fled=0;
   birds.forEach(b=>{
@@ -592,10 +642,10 @@ function threaten(){
     player.rage=clamp(player.rage+Math.min(8,affected*1.5),0,100);
     narrate(fled
       ? `Der Rackelhahn droht. ${fled} Birkhahn${fled===1?'':'e'} weicht aus.`
-      : 'Der Rackelhahn droht. Die mutigen Hähne halten den Balzplatz.',3.2,true,false);
+      : 'Der Rackelhahn droht. Die mutigen Hähne halten den Balzplatz.',3.2,true);
     showThreatHint(`${affected} Hahn${affected===1?'':'e'} betroffen · ${fled} flieht`);
   } else {
-    narrate('Der Rackelhahn droht ins leere Moor. Kein Birkhahn ist nah genug.',2.8,true,false);
+    narrate('Der Rackelhahn droht ins leere Moor. Kein Birkhahn ist nah genug.',2.8,true);
     showThreatHint('Kein Birkhahn in Droh-Reichweite');
   }
 }
@@ -741,7 +791,7 @@ function update(dt){
   if(aliveNow===0){
     if(allDeadCountdown<0){
       allDeadCountdown=2.4;
-      narrate('Auf dem Balzplatz ist kein Birkhahn mehr übrig.',2.4,true,true);
+      narrate('Auf dem Balzplatz ist kein Birkhahn mehr übrig.',2.4,true);
     } else {
       allDeadCountdown-=dt;
       if(allDeadCountdown<=0){endGame('all_dead');return;}
@@ -856,7 +906,7 @@ function drawPlayer(){
     ctx.lineWidth=2;
     ctx.beginPath();ctx.arc(player.x,player.y,34+Math.sin(performance.now()/90)*3,0,Math.PI*2);ctx.stroke();
   }
-  birdShape(player.x,player.y,1.15,player.dir||1,'rackel',false,true,false);
+  birdShape(player.x,player.y,1.15,player.dir||1,'rackel',false,true);
   // spread wings while threatening/attacking
   if(player.attackCd>.18 || player.threatCd>.55){
     ctx.translate(player.x,player.y);
@@ -871,7 +921,7 @@ function drawParticles(){
   // blood + detached head
   blood.forEach(p=>{
     if(p.isHead){
-      birdShape(p.x,p.y,.34,1,'birk',false,true,false);
+      birdShape(p.x,p.y,.34,1,'birk',false,true);
     } else {
       ctx.fillStyle=`rgba(112,24,24,${clamp(p.life*1.4,0,.9)})`;
       ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fill();
