@@ -67,11 +67,46 @@
   .introPage{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:max(22px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(58px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));background:#070a0c}
   .introPage.active{display:flex}.introInner{width:min(760px,100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}.introHero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:auto;filter:brightness(.42) saturate(.72) contrast(1.08);transform:scale(1.04)}.introShade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(2,4,5,.06),rgba(4,6,7,.38) 45%,rgba(3,5,6,.92))}.introFront{position:relative;z-index:2;text-shadow:0 3px 20px rgba(0,0,0,.9)}.introTitle{font-family:Georgia,serif;font-size:clamp(42px,10vw,78px);letter-spacing:.04em;margin:0}.introSub{font-family:Georgia,serif;font-size:clamp(19px,4.5vw,30px);color:#d4dadd;margin:0}.introBig{font-family:Georgia,serif;font-size:clamp(24px,5.4vw,40px);line-height:1.34;margin:0;max-width:800px}.introSmall{font-size:clamp(14px,3.5vw,19px);line-height:1.45;color:#c6cfd3;max-width:720px;margin:0}.introHint{position:absolute;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);white-space:nowrap;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#bdc7cc;animation:introPulse 1.7s ease-in-out infinite}@keyframes introPulse{0%,100%{opacity:.4}50%{opacity:1}}.introControls{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(560px,100%)}.introBox{border:1px solid rgba(255,255,255,.13);border-radius:12px;background:rgba(255,255,255,.035);padding:11px;text-align:left;font-size:14px}.introStart{min-width:220px;padding:14px 20px;font-size:16px}
   @media(max-width:600px){.introControls{grid-template-columns:1fr}.introBox{padding:8px 10px;font-size:13px}.introInner{gap:10px}.introSmall{font-size:14px}.introPage{padding-bottom:max(52px,env(safe-area-inset-bottom))}}
+
+  /* Mobile game HUD: landscape-first, minimal and unobtrusive */
+  #mobileHud{display:none}
+  #rotateNotice{display:none;position:absolute;inset:0;z-index:10000;background:#070a0c;color:#eef2f4;align-items:center;justify-content:center;text-align:center;padding:28px;font-family:Georgia,serif}
+  #rotateNotice .rotateInner{max-width:420px}
+  #rotateNotice .rotateIcon{font-size:52px;margin-bottom:12px}
+  #rotateNotice b{font-size:24px;display:block;margin-bottom:8px}
+  #rotateNotice span{font-family:Inter,system-ui,sans-serif;color:#b9c3c8;font-size:14px;line-height:1.45}
+
+  @media (pointer:coarse), (max-width:900px){
+    #stats{display:none!important}
+    #mobileHud{display:flex;position:absolute;z-index:40;top:max(5px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);align-items:center;gap:9px;padding:5px 9px;border-radius:999px;background:rgba(10,14,17,.68);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(5px);font-size:10px;line-height:1;white-space:nowrap;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+    #mobileHud b{font-size:10px;font-weight:700}
+    #mobileHud .mhSep{opacity:.35}
+    #narrator{bottom:max(7px,env(safe-area-inset-bottom));width:min(48vw,500px);z-index:32}
+    #narrator .panel{font-size:13px;line-height:1.25;padding:6px 9px;border-radius:9px;background:rgba(10,14,17,.62);box-shadow:none}
+    #narrator small{font-size:7px;margin-bottom:2px;letter-spacing:.09em}
+    #joystick{left:max(10px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));width:82px;height:82px;background:rgba(12,17,20,.36)}
+    #stick{width:34px;height:34px;background:rgba(222,228,231,.68)}
+    #touchButtons{right:max(10px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));grid-template-columns:66px 66px;gap:7px}
+    .touchBtn{height:54px;border-radius:13px;padding:0 5px;font-size:10px;background:rgba(13,18,21,.62)}
+    #threatHint{top:max(34px,calc(env(safe-area-inset-top) + 30px));font-size:9px;padding:4px 7px;max-width:55vw;text-align:center}
+  }
+
+  @media (pointer:coarse) and (orientation:portrait){
+    #rotateNotice{display:flex}
+  }
+
+  @media (pointer:coarse) and (orientation:landscape){
+    #rotateNotice{display:none}
+  }
+
 </style>
 </head>
 <body>
 <div id="wrap">
 <canvas id="game"></canvas>
+<div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
+<div id="rotateNotice"><div class="rotateInner"><div class="rotateIcon">↻</div><b>Bitte ins Breitformat drehen</b><span>Die mobile Version ist für Querformat gebaut. Im Hochformat bleibt das Spiel pausiert, damit das Interface die Spielfläche nicht verdeckt.</span></div></div>
+
 
 <div id="topbar">
   <div id="stats" class="panel">
@@ -153,6 +188,11 @@ const eventlog = document.getElementById('eventlog');
 const summary = document.getElementById('summary');
 const voiceToggle = document.getElementById('voiceToggle');
 const musicToggle = document.getElementById('musicToggle');
+const rageMobile = document.getElementById('rageMobile');
+const scoreMobile = document.getElementById('scoreMobile');
+const aliveMobile = document.getElementById('aliveMobile');
+const timeMobile = document.getElementById('timeMobile');
+
 
 const joystick = document.getElementById('joystick');
 const stick = document.getElementById('stick');
@@ -170,6 +210,31 @@ let joystickPointer = null;
 let allDeadCountdown = -1;
 let threatWave = 0;
 
+
+
+function mobileGameMode(){
+  return matchMedia('(pointer:coarse)').matches || Math.min(innerWidth,innerHeight)<700;
+}
+function portraitBlocked(){
+  return mobileGameMode() && innerHeight>innerWidth;
+}
+async function requestLandscape(){
+  if(!mobileGameMode()) return;
+  try{
+    if(document.documentElement.requestFullscreen && !document.fullscreenElement){
+      await document.documentElement.requestFullscreen({navigationUI:'hide'});
+    }
+  }catch(e){}
+  try{
+    if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  }catch(e){}
+}
+function playBounds(){
+  if(mobileGameMode() && W>H){
+    return {left:105,right:W-150,top:43,bottom:H-72};
+  }
+  return {left:35,right:W-35,top:95,bottom:H-55};
+}
 
 let W=0,H=0,dpr=1;
 function resize(){
@@ -403,7 +468,7 @@ function narrate(text, seconds=3.7, force=false, speak=true){
   if(speak) queueNarration(text);
 }
 function addScore(n,label){
-  score+=n; scoreEl.textContent=score;
+  score+=n; scoreEl.textContent=score; if(scoreMobile) scoreMobile.textContent=score;
   if(label) logEvent(label+'  +'+n);
 }
 
@@ -430,14 +495,15 @@ function resetGame(){
   player=makePlayer();
   birds=Array.from({length:7},(_,i)=>makeBird(i));
   makeSnow();
-  scoreEl.textContent='0';
+  scoreEl.textContent='0'; if(scoreMobile) scoreMobile.textContent='0';
   narrate('Über Nacht ist das Wetter umgeschlagen.',4,true);
   updateUI();
   if(running){overlay.style.display='none';intro.style.display='block';result.style.display='none';}
 }
 resetGame();
 
-function start(){
+async function start(){
+  await requestLandscape();
   unlockSpeech();
   startMusic();
   running=true; overlay.style.display='none'; last=performance.now();
@@ -548,7 +614,8 @@ function updatePlayer(dt){
     let speed=(keys['shift']?185:125)*(1-player.rage*.0018)*(.45+.55*mag);
     player.x+=dx*speed*dt;player.y+=dy*speed*dt;player.dir=dx||player.dir;
   }
-  player.x=clamp(player.x,35,W-35); player.y=clamp(player.y,95,H-55);
+  const pb=playBounds();
+  player.x=clamp(player.x,pb.left,pb.right); player.y=clamp(player.y,pb.top,pb.bottom);
 
   if(keys[' ']){ keys[' ']=false; attack(); }
   if(keys['e']){ keys['e']=false; threaten(); }
@@ -632,7 +699,8 @@ function updateBird(b,dt){
     }
   }
 
-  b.x=clamp(b.x,30,W-30);b.y=clamp(b.y,90,H-45);
+  const bb=playBounds();
+  b.x=clamp(b.x,bb.left,bb.right);b.y=clamp(b.y,bb.top,bb.bottom);
 }
 
 function updateParticles(dt){
@@ -657,6 +725,7 @@ function updateParticles(dt){
 
 function update(dt){
   if(!running)return;
+  if(portraitBlocked()) return;
   gameTime-=dt;
   narratorTimer-=dt;
   fogPulse=Math.max(0,fogPulse-dt);
@@ -684,11 +753,19 @@ function update(dt){
 }
 
 function updateUI(){
-  rageText.textContent=Math.round(player.rage);
+  const rageNow=Math.round(player.rage);
+  const aliveNow=birds.filter(b=>b.alive).length;
+  rageText.textContent=rageNow;
   rageFill.style.width=player.rage+'%';
   scoreEl.textContent=score;
-  aliveEl.textContent=birds.filter(b=>b.alive).length;
-  const t=Math.max(0,Math.ceil(gameTime));timeLeftEl.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+  aliveEl.textContent=aliveNow;
+  const t=Math.max(0,Math.ceil(gameTime));
+  const timeNow=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+  timeLeftEl.textContent=timeNow;
+  rageMobile.textContent=rageNow+'%';
+  scoreMobile.textContent=score;
+  aliveMobile.textContent=aliveNow;
+  timeMobile.textContent=timeNow;
 }
 
 function drawGround(){
