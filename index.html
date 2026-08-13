@@ -258,7 +258,7 @@
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V12</div>
+<div id="versionTag">V13</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -752,7 +752,7 @@ function updatePlayer(dt){
     }
   });
   player.rage += nearBalz*1.55*dt;
-  player.rage -= (nearBalz<.15 ? 4.2 : 1.05)*dt;
+  player.rage -= (nearBalz<.15 ? 6.0 : 1.65)*dt;
   player.rage=clamp(player.rage,0,100);
 
   // High-rage fixation: subtle involuntary drift toward nearest brave target.
