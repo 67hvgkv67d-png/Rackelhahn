@@ -316,7 +316,7 @@
   }
 
 
-  /* V25: fünfstufiges Training */
+  /* V26: fünfstufiges Training */
   #levelHud{
     position:absolute;
     z-index:13;
@@ -391,7 +391,7 @@
   }
 
 
-/* V25: Briefing vor jedem Level */
+/* V26: Briefing vor jedem Level */
 #levelBriefing{display:none;width:100%;height:100%;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
 .levelBriefingInner{width:min(620px,100%)}
 #levelBriefingKicker{font-size:10px;letter-spacing:.18em;color:#aeb9be;margin-bottom:8px}
@@ -399,17 +399,31 @@
 #levelBriefingText{font-family:Georgia,serif;font-size:17px;line-height:1.45;color:#d8dfe2}
 #levelBriefingGoal{margin:18px auto;width:min(430px,100%);box-sizing:border-box}
 @media(max-width:600px){#levelBriefingQuote{font-size:17px}#levelBriefingText{font-size:15px}#levelBriefingGoal{font-size:13px;margin:12px auto}}
-/* V25: deutliches, transparentes Fortschrittsfeedback */
+/* V26: deutliches, transparentes Fortschrittsfeedback */
 #goalFlash{position:fixed;left:50%;top:31%;z-index:12;pointer-events:none;text-align:center;color:#fff;opacity:0;transform:translate(-50%,-50%) scale(.9);transition:opacity .18s ease,transform .18s ease;text-shadow:0 2px 12px #000,0 0 24px #7d0909;font-size:clamp(22px,4vw,42px);letter-spacing:.12em;white-space:nowrap}
 #goalFlash small{display:block;margin-top:8px;font-size:clamp(11px,1.5vw,15px);letter-spacing:.08em;color:#e5d9d9}
 #goalFlash.active{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #highScoreIntro{margin:12px auto 4px;color:#d9c7a0}
 @media(max-width:600px){#goalFlash{top:28%;white-space:normal;width:90%}}
+/* V26: Auf Start-, Briefing- und Ergebnisseiten bleibt die Spieloberfläche unsichtbar. */
+body.overlayMode #levelHud,
+body.overlayMode #topbar,
+body.overlayMode #mobileHud,
+body.overlayMode #furyBanner,
+body.overlayMode #narrator,
+body.overlayMode #eventlog,
+body.overlayMode #threatHint,
+body.overlayMode #goalFlash,
+body.overlayMode #touchControls{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
 </style>
 </head>
-<body>
+<body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V25</div>
+<div id="versionTag">V26</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -865,6 +879,7 @@ function resetGame(){
 }
 
 function showLevelBriefing(level){
+  document.body.classList.add('overlayMode');
   currentLevel=clamp(level,1,6); running=false; overlay.style.display='flex';
   intro.style.display='none'; levelBriefing.style.display='flex'; levelComplete.style.display='none'; result.style.display='none';
   const free=currentLevel===6;
@@ -876,6 +891,7 @@ function showLevelBriefing(level){
   beginLevelBtn.onclick=()=>startLevel(currentLevel);
 }
 function startLevel(level){
+  document.body.classList.remove('overlayMode');
   levelBriefing.style.display='none';
   currentLevel=clamp(level,1,6);
   if(!audioUnlocked) primeAudio(); else startMusic();
@@ -887,6 +903,7 @@ function startLevel(level){
 
 function showTrainingResult(success){
   if(levelCompleteLock)return;
+  document.body.classList.add('overlayMode');
   levelBriefing.style.display='none'; levelCompleteLock=true; running=false;
   goalFlash.classList.remove('active');
   overlay.style.display='flex'; intro.style.display='none'; result.style.display='none'; levelComplete.style.display='flex';
@@ -1638,6 +1655,7 @@ function render(){
 
 function endGame(reason='time'){
   if(!running && freeScoreSaved)return;
+  document.body.classList.add('overlayMode');
   running=false; stopMusic(); goalFlash.classList.remove('active');
   const alive=birds.filter(b=>b.alive).length;
   let highScoreBlock='';
