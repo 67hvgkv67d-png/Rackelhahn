@@ -517,7 +517,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V38</div>
+<div id="versionTag">V39</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -690,6 +690,9 @@ function scaleWorldForViewport(oldW,oldH,newW,newH){
     if(Number.isFinite(o.y))o.y*=sy;
     if(Number.isFinite(o.tx))o.tx*=sx;
     if(Number.isFinite(o.ty))o.ty*=sy;
+    if(Number.isFinite(o.startX))o.startX*=sx;
+    if(Number.isFinite(o.startY))o.startY*=sy;
+    if(Number.isFinite(o.curveBias))o.curveBias*=sx;
   };
   scalePoint(player);
   birds.forEach(scalePoint);
@@ -1275,15 +1278,24 @@ function triggerDecapitation(b,nx,ny){
   spawnFeathers(b.x,b.y,14);
 
   // detached head projectile
+  const headStartX=b.x+nx*16;
+  const headStartY=b.y-8;
   const head={
-    x:b.x+nx*16,
-    y:b.y-8,
-    vx:nx*220+rnd(-40,40),
-    vy:-140+rnd(-35,20),
-    life:60,
+    x:headStartX,
+    y:headStartY,
+    startX:headStartX,
+    startY:headStartY,
+    trophyIndex:Math.max(0,decaps-1),
+    flightT:0,
+    flightDuration:rnd(.72,.94),
+    curveBias:rnd(-36,36),
+    arcLift:rnd(92,142),
+    landed:false,
+    life:Infinity,
     r:10,
     rot:0,
-    vr:rnd(-9,9)
+    vr:rnd(-10,10),
+    restRot:rnd(-.20,.20)
   };
   blood.push({...head,isHead:true,s:10});
 
@@ -1308,7 +1320,7 @@ function triggerDecapitation(b,nx,ny){
   player.rage=(currentLevel===4 && decaps<2)?74:8;
   narrate('Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.',5,true);
   if(currentLevel===4)showThreatHint(`KOPF ABGERISSEN · ${Math.min(2,decaps)}/2`);
-  else showThreatHint('KOPULIEREN: den roten Knopf 3× antippen');
+  else showThreatHint('KOPULIEREN: den Aktionsknopf 3× drücken');
 }
 
 function nearestUrgeCorpse(maxDistance=92){
@@ -1650,6 +1662,20 @@ function separateBirds(){
   }
 }
 
+function headLandingPoint(index){
+  const landscape=W>H;
+  const columns=landscape?9:4;
+  const maximumWidth=landscape?Math.min(430,W-270):Math.min(150,W-238);
+  const spacing=columns>1?maximumWidth/(columns-1):0;
+  const column=index%columns;
+  const row=Math.floor(index/columns);
+  const stagger=row%2?spacing*.16:0;
+  return {
+    x:clamp(W*.5+(column-(columns-1)*.5)*spacing+stagger,112,W-112),
+    y:H-(landscape?38:43)-row*24
+  };
+}
+
 function updateParticles(dt){
   snow.forEach(s=>{
     s.x+=s.dr*dt;s.y+=s.v*dt;
@@ -1658,15 +1684,34 @@ function updateParticles(dt){
   });
   blood.forEach(p=>{
     if(p.isHead){
-      p.vy+=240*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.987;
-      p.rot=(p.rot||0)+(p.vr||0)*dt;
-      if(p.y>H-42){p.y=H-42;p.vy*=-.22;p.vx*=.65;p.vr*=.82;}
-      p.life-=dt;
+      const target=headLandingPoint(p.trophyIndex||0);
+      if(!p.landed){
+        p.flightT=Math.min(p.flightDuration,p.flightT+dt);
+        const u=clamp(p.flightT/p.flightDuration,0,1);
+        const inv=1-u;
+        const controlX=(p.startX+target.x)*.5+p.curveBias;
+        const controlY=Math.min(p.startY,target.y)-p.arcLift;
+        p.x=inv*inv*p.startX+2*inv*u*controlX+u*u*target.x;
+        p.y=inv*inv*p.startY+2*inv*u*controlY+u*u*target.y;
+        p.rot=(p.rot||0)+(p.vr||0)*dt;
+        if(u>=1){
+          p.landed=true;
+          p.x=target.x;p.y=target.y;
+          p.rot=p.restRot;
+        }
+      }else{
+        const settle=Math.min(1,dt*14);
+        p.x+=(target.x-p.x)*settle;
+        p.y+=(target.y-p.y)*settle;
+        p.rot=p.restRot;
+      }
     } else {
       p.vy+=260*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
     }
   });
-  blood=blood.filter(p=>p.life>0);
+  blood=blood.filter(p=>p.isHead||p.life>0);
+  const trophyHeads=blood.filter(p=>p.isHead);
+  document.body.dataset.headTrophies=trophyHeads.map(p=>`${Math.round(p.x)},${Math.round(p.y)}`).join('|');
   feathers.forEach(f=>{f.vy+=35*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.rot+=f.vr*dt;f.life-=dt});
   feathers=feathers.filter(f=>f.life>0);
 
