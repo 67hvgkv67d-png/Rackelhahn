@@ -717,7 +717,9 @@ function triggerDecapitation(b,nx,ny){
   b.ritualReady=true;
   b.ritualCount=0;
   b.ritualDone=false;
+  b.ritualSecondShown=false;
   b.corpsePulse=1;
+  gameTime=Math.max(gameTime,12);
 
   addScore(750,'Kopf abgerissen');
   shake=18;
@@ -754,9 +756,16 @@ function performCorpseRitual(){
   shake=3;
 
   if(corpse.ritualCount===1){
-    narrate('Was vorne und hinten ist, ist an den zerfetzten Überresten kaum noch erkennbar.',5.2,true);
-  }else if(corpse.ritualCount===2){
-    narrate('Trotzdem kopuliert der Rackelhahn mehrere Male auf dem leblosen Körper.',6.0,true);
+    narrate('Was vorne und hinten ist, ist an den zerfetzten Überresten kaum noch erkennbar.',4.8,true);
+  }else if(corpse.ritualCount===2 && !corpse.ritualSecondShown){
+    corpse.ritualSecondShown=true;
+    const delay=Math.max(450,(narratorTimer-.25)*1000);
+    setTimeout(()=>{
+      if(running && birds.includes(corpse)){
+        narrate('Trotzdem kopuliert der Rackelhahn mehrere Male auf dem leblosen Körper.',6.0,true);
+      }
+    },delay);
+    gameTime=Math.max(gameTime,7);
   }
 
   if(corpse.ritualCount>=3){
