@@ -490,7 +490,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V36</div>
+<div id="versionTag">V37</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -673,9 +673,12 @@ resize();
 
 const keys = {};
 addEventListener('keydown',e=>{
-  keys[e.key.toLowerCase()]=true;
-  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
-  if(e.key.toLowerCase()==='r' && running) startLevel(currentLevel);
+  const key=e.key.toLowerCase();
+  keys[key]=true;
+  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(key))e.preventDefault();
+  if(key===' '&&running&&!e.repeat)contextAction();
+  if(key==='e'&&running&&!e.repeat)contextAction();
+  if(key==='r'&&running)startLevel(currentLevel);
 });
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 
@@ -1464,9 +1467,6 @@ function updatePlayer(dt){
   }
   const pb=playBounds();
   player.x=clamp(player.x,pb.left,pb.right); player.y=clamp(player.y,pb.top,pb.bottom);
-
-  if(keys[' ']){ keys[' ']=false; contextAction(); }
-  if(keys['e']){ keys['e']=false; contextAction(); }
 
   // Rage generation from nearby balzing birds and red roses.
   let nearBalz=0;
