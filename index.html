@@ -340,7 +340,7 @@
   }
   #levelHud b{font-size:9px;color:#fff}
   #levelObjective{overflow:hidden;text-overflow:ellipsis}
-  .levelStartChoices{display:flex;flex-direction:column;gap:10px;align-items:center;width:min(430px,100%)}
+  .levelStartChoices,.menuActionStack{display:flex;flex-direction:column;gap:10px;align-items:center;width:min(430px,100%);margin-left:auto;margin-right:auto}
   .levelStartChoices .introStart{width:100%}
   .moorStart{
     background:linear-gradient(180deg,#e7ecef,#cbd4d9)!important;
@@ -348,12 +348,13 @@
     border-color:rgba(255,255,255,.65)!important;
     box-shadow:0 10px 30px rgba(190,205,212,.18)!important;
   }
-  .tutorialStart{
+  .tutorialStart,.menuBackBtn{
     background:rgba(255,255,255,.045)!important;
     color:#aeb9be!important;
     border-color:rgba(255,255,255,.13)!important;
     box-shadow:none!important;
   }
+  .menuBackBtn{width:100%;font-weight:600}
   #levelComplete{
     display:none;
     width:100%;
@@ -439,7 +440,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V33</div>
+<div id="versionTag">V34</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -496,14 +497,14 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
     <div id="levelBriefing"><div class="levelBriefingInner">
   <div id="levelBriefingKicker">TRAINING</div><h1 id="levelBriefingTitle">Level 1</h1>
   <blockquote id="levelBriefingQuote"></blockquote><p id="levelBriefingText"></p>
-  <div id="levelBriefingGoal" class="box"></div><button id="beginLevelBtn">Level starten</button>
+  <div id="levelBriefingGoal" class="box"></div><div class="menuActionStack"><button id="beginLevelBtn">Level starten</button><button id="briefingBackBtn" class="menuBackBtn">Zurück zum Hauptmenü</button></div>
 </div></div>
 <div id="levelComplete">
       <div class="levelCompleteInner">
         <div id="levelCompleteKicker">TRAINING</div>
         <h1 id="levelCompleteTitle">Level geschafft</h1>
         <p id="levelCompleteText"></p>
-        <button id="continueLevelBtn">Weiter</button>
+        <div class="menuActionStack"><button id="continueLevelBtn">Weiter</button><button id="levelBackBtn" class="menuBackBtn">Zurück zum Hauptmenü</button></div>
       </div>
     </div>
 
@@ -537,6 +538,8 @@ const levelBriefingQuote = document.getElementById('levelBriefingQuote');
 const levelBriefingText = document.getElementById('levelBriefingText');
 const levelBriefingGoal = document.getElementById('levelBriefingGoal');
 const beginLevelBtn = document.getElementById('beginLevelBtn');
+const briefingBackBtn = document.getElementById('briefingBackBtn');
+const levelBackBtn = document.getElementById('levelBackBtn');
 const highScoreIntro = document.getElementById('highScoreIntro');
 const levelComplete = document.getElementById('levelComplete');
 const levelCompleteTitle = document.getElementById('levelCompleteTitle');
@@ -1014,6 +1017,23 @@ function resetGame(){
   updateUI();
 }
 
+function returnToMainMenu(){
+  running=false;
+  levelFinishPending=false;
+  levelCompleteLock=false;
+  document.body.classList.add('overlayMode');
+  document.body.classList.remove('freePlay');
+  goalFlash.classList.remove('active');
+  overlay.style.display='flex';
+  intro.style.display='block';
+  levelBriefing.style.display='none';
+  levelComplete.style.display='none';
+  result.style.display='none';
+  showIntroPage(introPages.length-1);
+  refreshHighScoreIntro();
+  startMenuMusic();
+}
+
 function showLevelBriefing(level){
   document.body.classList.add('overlayMode');
   document.body.classList.remove('freePlay');
@@ -1102,6 +1122,8 @@ function start(){showLevelBriefing(1);}
 startBtn.onclick=()=>showLevelBriefing(1);
 skipTrainingBtn.onclick=()=>showLevelBriefing(6);
 againBtn.onclick=()=>showLevelBriefing(6);
+briefingBackBtn.onclick=returnToMainMenu;
+levelBackBtn.onclick=returnToMainMenu;
 resetGame();
 
 function spawnBlood(x,y,n=8){
