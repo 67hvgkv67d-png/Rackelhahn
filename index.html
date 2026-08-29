@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Rackelhahn – Ein unfruchtbarer Bastard | Prototyp</title>
-<meta name="theme-color" content="#070a0c">
+<meta name="theme-color" content="#080d0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Rackelhahn">
@@ -437,20 +437,7 @@ body.freePlay #levelHud{display:none!important}
 html,body,#wrap,#game,#touchControls,#overlay{touch-action:none!important;overscroll-behavior:none}
 html,body{width:100%;height:100%;position:fixed;inset:0}
 
-  /* V35: ein großer Kontextknopf und volle iOS-Web-App-Fläche */
-  :root{--app-height:100dvh}
-  html,body{
-    width:100vw!important;
-    height:var(--app-height,100dvh)!important;
-    min-height:var(--app-height,100dvh)!important;
-    background:#070a0c!important;
-  }
-  #wrap,#overlay,#card{
-    width:100vw!important;
-    height:var(--app-height,100dvh)!important;
-    min-height:var(--app-height,100dvh)!important;
-  }
-  #wrap{position:fixed!important;inset:0!important}
+  /* V38: ein Kontextknopf, sichtbare Fläche und stabiler Orientierungswechsel */
   #attackBtn{display:none!important}
   #touchButtons{
     grid-template-columns:96px!important;
@@ -474,7 +461,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
   }
   @media (pointer:coarse), (max-width:900px){
     #result{
-      height:var(--app-height,100dvh)!important;
+      height:100%!important;
       box-sizing:border-box!important;
       overflow-y:auto!important;
       -webkit-overflow-scrolling:touch;
@@ -485,12 +472,52 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
       padding:max(24px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;
     }
   }
+  @media (pointer:coarse) and (orientation:landscape){
+    #mobileHud{
+      top:max(4px,env(safe-area-inset-top))!important;
+      padding:4px 8px!important;
+    }
+    #joystick{
+      left:max(10px,env(safe-area-inset-left))!important;
+      bottom:max(8px,env(safe-area-inset-bottom))!important;
+      width:78px!important;
+      height:78px!important;
+    }
+    #stick{width:32px!important;height:32px!important}
+    #touchButtons{
+      right:max(10px,env(safe-area-inset-right))!important;
+      bottom:max(8px,env(safe-area-inset-bottom))!important;
+      grid-template-columns:88px!important;
+    }
+    #threatBtn{
+      width:88px!important;
+      height:54px!important;
+      border-radius:14px!important;
+      font-size:10px!important;
+    }
+    #narrator{
+      top:max(66px,calc(env(safe-area-inset-top) + 54px))!important;
+      width:min(72vw,720px)!important;
+    }
+    #narrator .panel{font-size:12px!important;line-height:1.2!important}
+    #levelHud{
+      top:max(52px,calc(env(safe-area-inset-top) + 44px))!important;
+      max-width:70vw!important;
+    }
+    #threatHint{
+      top:max(98px,calc(env(safe-area-inset-top) + 88px))!important;
+      max-width:60vw!important;
+    }
+    #furyBanner{
+      top:max(34px,calc(env(safe-area-inset-top) + 27px))!important;
+    }
+  }
 
 </style>
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V37</div>
+<div id="versionTag">V38</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -653,21 +680,54 @@ let threatWave = 0;
 
 
 let W=0,H=0,dpr=1;
-function appViewportHeight(){
-  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
-  const visible=Math.round(window.visualViewport?.height||innerHeight);
-  const fullScreen=Math.round(window.screen?.height||visible);
-  return standalone?Math.max(visible,fullScreen):visible;
+let worldReady=false;
+function scaleWorldForViewport(oldW,oldH,newW,newH){
+  if(!worldReady||oldW<=0||oldH<=0)return;
+  const sx=newW/oldW,sy=newH/oldH;
+  const scalePoint=o=>{
+    if(!o)return;
+    if(Number.isFinite(o.x))o.x*=sx;
+    if(Number.isFinite(o.y))o.y*=sy;
+    if(Number.isFinite(o.tx))o.tx*=sx;
+    if(Number.isFinite(o.ty))o.ty*=sy;
+  };
+  scalePoint(player);
+  birds.forEach(scalePoint);
+  corpses.forEach(scalePoint);
+  blood.forEach(scalePoint);
+  feathers.forEach(scalePoint);
+  decapBursts.forEach(scalePoint);
+  snow.forEach(scalePoint);
 }
 function resize(){
+  const newW=Math.round(innerWidth);
+  const newH=Math.round(innerHeight);
+  if(newW<200||newH<200)return;
+  const oldW=W,oldH=H;
+  if(oldW&&oldH&&(oldW!==newW||oldH!==newH)){
+    releaseJoystick();
+    scaleWorldForViewport(oldW,oldH,newW,newH);
+  }
+  W=newW;H=newH;
   dpr=Math.min(2,window.devicePixelRatio||1);
-  W=innerWidth; H=appViewportHeight();
-  document.documentElement.style.setProperty('--app-height',H+'px');
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(worldReady){
+    const bounds=playBounds();
+    player.x=clamp(player.x,bounds.left,bounds.right);
+    player.y=clamp(player.y,bounds.top,bounds.bottom);
+    birds.forEach(b=>{
+      b.x=clamp(b.x,bounds.left,bounds.right);
+      b.y=clamp(b.y,bounds.top,bounds.bottom);
+      if(Number.isFinite(b.tx))b.tx=clamp(b.tx,bounds.left,bounds.right);
+      if(Number.isFinite(b.ty))b.ty=clamp(b.ty,bounds.top,bounds.bottom);
+    });
+    document.body.dataset.worldLayout=`${W}x${H}:${birds.length}`;
+  }
 }
 addEventListener('resize',resize);
+addEventListener('orientationchange',()=>setTimeout(resize,120));
 window.visualViewport?.addEventListener('resize',resize);
 resize();
 
@@ -775,19 +835,17 @@ function playBounds(){
   if(!isMobileGame()){
     return {left:35,right:W-35,top:72,bottom:H-70};
   }
-  // Keep birds/player away from top HUD and bottom controls/subtitles,
-  // but preserve most of the portrait playfield.
-  return {
-    left:38,
-    right:Math.max(39,W-38),
-    top:54,
-    bottom:Math.max(55,H-112)
-  };
+  const landscape=W>H;
+  return landscape
+    ? {left:46,right:Math.max(47,W-46),top:46,bottom:Math.max(47,H-72)}
+    : {left:38,right:Math.max(39,W-38),top:54,bottom:Math.max(55,H-112)};
 }
 
 function mobileSafeBounds(){
-  if(!isMobileGame()) return {l:35,r:W-35,t:72,b:H-70};
-  return {l:42,r:W-42,t:54,b:H-108};
+  if(!isMobileGame())return {l:35,r:W-35,t:72,b:H-70};
+  return W>H
+    ? {l:50,r:W-50,t:46,b:H-70}
+    : {l:42,r:W-42,t:54,b:H-108};
 }
 
 
@@ -1071,6 +1129,7 @@ function resetGame(){
   if(currentLevel===5)player.rage=35;
   birds=Array.from({length:cfg.birds},(_,i)=>makeBird(i));
   arrangeTrainingBirds();
+  worldReady=true;
   attackBtn.disabled=currentLevel===1;
   levelCompleteLock=false;
   makeSnow();
