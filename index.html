@@ -312,7 +312,7 @@
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V20</div>
+<div id="versionTag">V21</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -1188,7 +1188,23 @@ function drawBird(b){
 
   if(!b.alive){
     // Tote Tiere bleiben waagerecht, wirken aber klar entsättigt und starr.
-    // Der hellrote Kreis ist die einzige Interaktionsmarkierung.
+    // Eine kleine unregelmäßige Blutlache liegt unter dem Körper.
+    ctx.save();
+    ctx.translate(b.x,b.y+8);
+    ctx.scale((b.dir||1),1);
+    ctx.fillStyle='rgba(82,18,23,.42)';
+    ctx.beginPath();
+    ctx.moveTo(-22,-1);
+    ctx.bezierCurveTo(-15,-7,-5,-6,2,-4);
+    ctx.bezierCurveTo(11,-7,23,-3,25,2);
+    ctx.bezierCurveTo(18,7,7,6,-1,5);
+    ctx.bezierCurveTo(-10,8,-21,5,-22,-1);
+    ctx.fill();
+    ctx.fillStyle='rgba(112,25,30,.28)';
+    ctx.beginPath();ctx.ellipse(7,1,8,3,-.18,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+
+    // Der hellrote Kreis bleibt die einzige Interaktionsmarkierung.
     ctx.save();
     ctx.globalAlpha=.58;
     ctx.filter='grayscale(1) brightness(.58)';
