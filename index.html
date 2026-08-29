@@ -297,11 +297,22 @@
   }
 
 
+  /* V20: keine Textauswahl oder Safari-Langdruckmenüs im Spiel */
+  html,body,#wrap,#touchControls,#joystick,#touchButtons,.touchBtn,canvas{
+    -webkit-user-select:none!important;
+    user-select:none!important;
+    -webkit-touch-callout:none!important;
+  }
+  .touchBtn{
+    -webkit-tap-highlight-color:transparent!important;
+  }
+
+
 </style>
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V19</div>
+<div id="versionTag">V20</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -392,6 +403,7 @@ const aliveMobile = document.getElementById('aliveMobile');
 const timeMobile = document.getElementById('timeMobile');
 
 
+const touchControls = document.getElementById('touchControls');
 const joystick = document.getElementById('joystick');
 const stick = document.getElementById('stick');
 const attackBtn = document.getElementById('attackBtn');
@@ -461,6 +473,8 @@ threatBtn.addEventListener('pointerdown',e=>{
   if(nearestUrgeCorpse()) performCorpseRitual();
   else threaten();
 });
+touchControls.addEventListener('selectstart',e=>e.preventDefault());
+touchControls.addEventListener('contextmenu',e=>e.preventDefault());
 
 function showThreatHint(text){
   threatHint.textContent=text;
