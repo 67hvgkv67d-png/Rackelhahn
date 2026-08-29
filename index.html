@@ -308,7 +308,7 @@
   }
 
 
-  /* V23: fünfstufiges Training */
+  /* V24: fünfstufiges Training */
   #levelHud{
     position:absolute;
     z-index:13;
@@ -383,11 +383,19 @@
   }
 
 
+/* V24: Briefing vor jedem Level */
+#levelBriefing{display:none;width:100%;height:100%;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+.levelBriefingInner{width:min(620px,100%)}
+#levelBriefingKicker{font-size:10px;letter-spacing:.18em;color:#aeb9be;margin-bottom:8px}
+#levelBriefingQuote{margin:14px auto 16px;padding:0;width:min(520px,100%);font-family:Georgia,serif;font-size:20px;line-height:1.4;font-style:italic;color:#eef1f2}
+#levelBriefingText{font-family:Georgia,serif;font-size:17px;line-height:1.45;color:#d8dfe2}
+#levelBriefingGoal{margin:18px auto;width:min(430px,100%);box-sizing:border-box}
+@media(max-width:600px){#levelBriefingQuote{font-size:17px}#levelBriefingText{font-size:15px}#levelBriefingGoal{font-size:13px;margin:12px auto}}
 </style>
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V23</div>
+<div id="versionTag">V24</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -437,10 +445,15 @@
       <section class="introPage active"><img class="introHero" src="data:image/jpeg;base64,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" alt="Rackelhahn im winterlichen Moor"><div class="introShade"></div><div class="introInner introFront"><h1 class="introTitle">RACKELHAHN</h1><p class="introSub">Ein unfruchtbarer Bastard.</p></div><div class="introHint">Tippen zum Fortfahren</div></section>
       <section class="introPage"><div class="introInner"><p class="introBig">Über Nacht ist das Wetter umgeschlagen.</p><p class="introSmall">Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor. Eine gedämpfte Stimmung liegt in der Luft.</p></div><div class="introHint">Tippen zum Fortfahren</div></section>
       <section class="introPage"><div class="introInner"><p class="introBig">Du bist der Rackelhahn.</p><p class="introSmall">Mutige Birkhähne wagen sich gefährlich nah. Nähe, Balz und rote Rosen steigern deine Kampfwut.</p><div class="introControls"><div class="introBox"><b>Bewegen</b><br>WASD / Pfeile oder linker Handy-Stick</div><div class="introBox"><b>Angreifen</b><br>Leertaste oder ANGREIFEN</div><div class="introBox"><b>Drohen</b><br>E oder DROHEN – stört die Balz und kann Hähne vertreiben</div><div class="introBox"><b>Ziel</b><br>Dominiere den Balzplatz, bevor die Nacht fällt.</div></div></div><div class="introHint">Tippen zum Fortfahren</div></section>
-      <section class="introPage"><div class="introInner"><p class="introBig">Der Birkhahn ist besonders mutig – und das Unheil nimmt seinen Lauf.</p><p class="introSmall">Fünf kurze Level führen nacheinander Drohen, Töten, unermessliche Wut, Kopfabriss und Trieb ein.</p><div class="levelStartChoices"><button id="startBtn" class="introStart">Training bei Level 1 beginnen</button><button id="skipTrainingBtn" class="introStart secondaryStart">Training überspringen · Level 5</button></div></div></section>
+      <section class="introPage"><div class="introInner"><p class="introBig">Der Birkhahn ist besonders mutig – und das Unheil nimmt seinen Lauf.</p><p class="introSmall">Fünf kurze Level führen nacheinander Drohen, Töten, unermessliche Wut, Kopfabriss und Kopulieren ein.</p><div class="levelStartChoices"><button id="startBtn" class="introStart">Training bei Level 1 beginnen</button><button id="skipTrainingBtn" class="introStart secondaryStart">Training überspringen · Level 5</button></div></div></section>
     </div>
 
-    <div id="levelComplete">
+    <div id="levelBriefing"><div class="levelBriefingInner">
+  <div id="levelBriefingKicker">TRAINING</div><h1 id="levelBriefingTitle">Level 1</h1>
+  <blockquote id="levelBriefingQuote"></blockquote><p id="levelBriefingText"></p>
+  <div id="levelBriefingGoal" class="box"></div><button id="beginLevelBtn">Level starten</button>
+</div></div>
+<div id="levelComplete">
       <div class="levelCompleteInner">
         <div id="levelCompleteKicker">TRAINING</div>
         <h1 id="levelCompleteTitle">Level geschafft</h1>
@@ -472,6 +485,12 @@ const result = document.getElementById('result');
 const startBtn = document.getElementById('startBtn');
 const skipTrainingBtn = document.getElementById('skipTrainingBtn');
 const againBtn = document.getElementById('againBtn');
+const levelBriefing = document.getElementById('levelBriefing');
+const levelBriefingTitle = document.getElementById('levelBriefingTitle');
+const levelBriefingQuote = document.getElementById('levelBriefingQuote');
+const levelBriefingText = document.getElementById('levelBriefingText');
+const levelBriefingGoal = document.getElementById('levelBriefingGoal');
+const beginLevelBtn = document.getElementById('beginLevelBtn');
 const levelComplete = document.getElementById('levelComplete');
 const levelCompleteTitle = document.getElementById('levelCompleteTitle');
 const levelCompleteText = document.getElementById('levelCompleteText');
@@ -503,11 +522,11 @@ const threatBtn = document.getElementById('threatBtn');
 const threatHint = document.getElementById('threatHint');
 const LEVELS=[
   null,
-  {title:'DROHEN',objective:'Unterbrich 3 Balzaktionen',time:38,birds:4,intro:'Level 1: Unterbrich drei Balzaktionen mit DROHEN.'},
-  {title:'TÖTEN',objective:'Töte einen Birkhahn',time:42,birds:3,intro:'Level 2: Verfolge einen Birkhahn und greife mehrfach an.'},
-  {title:'UNERMESSLICHE WUT',objective:'Erreiche 68 Wut',time:42,birds:5,intro:'Level 3: Bleibe bei balzenden Hähnen und steigere deine Wut auf 68.'},
-  {title:'KOPF ABREISSEN',objective:'Reiße einen Kopf ab',time:30,birds:3,intro:'Level 4: Mit unermesslicher Wut kannst du einen toten Hahn erneut angreifen.'},
-  {title:'TRIEB',objective:'Vollziehe die gesamte Kette und 3 Kadaverhandlungen',time:75,birds:7,intro:'Level 5: Alle Mechaniken sind aktiv. Bringe die vollständige Eskalation zu Ende.'}
+  {title:'DROHEN',objective:'Dreimal erfolgreich drohen',time:45,birds:4,intro:'Level 1: Unterbrich dreimal erfolgreich die Balz.',quote:'„Etwas zu übermütig balzen die zwei kleinen Hähne in der Nähe des Bastards herum.“',explanation:'DROHEN erzeugt eine Welle um den Rackelhahn. Ein Einsatz zählt als erfolgreich, sobald mindestens ein lebender Birkhahn in Reichweite betroffen ist.'},
+  {title:'TÖTEN',objective:'Drei Birkhähne töten',time:60,birds:3,intro:'Level 2: Töte drei Birkhähne.',quote:'„Blitzschnell hat der Rackelhahn den Birkhahn erwischt.“',explanation:'Mit ANGREIFEN triffst du den nächsten Hahn in kurzer Entfernung. Ein einzelner Treffer reicht nicht: Bleibe am Ziel und greife mehrfach an.'},
+  {title:'UNERMESSLICHE WUT',objective:'Unermessliche Wut zweimal erreichen',time:65,birds:5,intro:'Level 3: Erreiche zweimal unermessliche Wut.',quote:'„Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.“',explanation:'Wut wächst in der Nähe balzender Hähne sowie durch erfolgreiche Aktionen. Ab 68 beginnt UNERMESSLICHE WUT. Nach dem ersten Erreichen wird sie für den zweiten Trainingsdurchlauf zurückgesetzt.'},
+  {title:'KOPF ABREISSEN',objective:'Zwei Köpfe abreißen',time:45,birds:4,intro:'Level 4: Reiße zwei Köpfe ab.',quote:'„Auf die roten Rosen am Kopf des Birkhahns ist er besonders fixiert.“',explanation:'Ein toter Birkhahn kann mit UNERMESSLICHER WUT erneut angegriffen werden. Dadurch wird sein Kopf abgerissen. Für dieses Training liegen zwei erreichbare Kadaver bereit.'},
+  {title:'KOPULIEREN',objective:'Zwei Kopulationssequenzen vollständig von 1 bis 3 ausführen',time:120,birds:7,intro:'Level 5: Schließe zweimal KOPULIEREN 1 bis 3 vollständig ab.',quote:'„Trotzdem kopuliert der Rackelhahn mehrere Male auf dem leblosen Körper.“',explanation:'Jetzt greift alles ineinander: Drohen, töten, Wut aufbauen und den Kopf abreißen. Erst am kopflosen Kadaver erscheint KOPULIEREN. Tippe die Aktion dreimal; wiederhole die vollständige Sequenz an einem zweiten Kadaver.'}
 ];
 let currentLevel=1;
 let levelCompleteLock=false;
@@ -588,6 +607,7 @@ function showThreatHint(text){
 
 
 let running=false, last=0, gameTime=60, score=0, kills=0, decaps=0, disrupted=0, corpseActs=0;
+let successfulThreats=0, furyReachedCount=0, completedRituals=0, furyWasActive=false;
 let narratorTimer=0, currentNarration='';
 let shake=0, fogPulse=0, decapFlash=0;
 let blood=[], feathers=[], snow=[], corpses=[], decapBursts=[];
@@ -756,7 +776,7 @@ function arrangeTrainingBirds(){
       const a=-1.15+i*.76;
       b.x=player.x+Math.cos(a)*(88+i*8);
       b.y=player.y+Math.sin(a)*(82+i*5);
-      b.courage=.22+i*.07;
+      b.courage=.92;
       b.courtship=.88;
       b.state='balz';
     });
@@ -771,21 +791,20 @@ function arrangeTrainingBirds(){
       b.courage=.82;b.courtship=.96;b.state='balz';
     });
   }else if(currentLevel===4){
-    const corpse=birds[0];
-    corpse.x=player.x+58;corpse.y=player.y+4;
-    corpse.hp=0;corpse.alive=false;corpse.down=true;corpse.head=true;corpse.state='down';
-    corpses.push({birdId:corpse.id,x:corpse.x,y:corpse.y,head:true,age:0,cleared:false});
+    [birds[0],birds[1]].forEach((corpse,i)=>{
+      corpse.x=player.x+(i===0?58:-58); corpse.y=player.y+(i===0?5:-7);
+      corpse.hp=0; corpse.alive=false; corpse.down=true; corpse.head=true; corpse.state='down';
+      corpses.push({birdId:corpse.id,x:corpse.x,y:corpse.y,head:true,age:0,cleared:false});
+    });
     player.rage=74;
-    for(let i=1;i<birds.length;i++){
-      birds[i].x=player.x+(i===1?-135:150);
-      birds[i].y=player.y+(i===1?-90:85);
-    }
+    for(let i=2;i<birds.length;i++){birds[i].x=player.x+(i===2?-150:155);birds[i].y=player.y+(i===2?-95:90);}
   }
 }
 
 function resetGame(){
   const cfg=LEVELS[currentLevel];
   gameTime=cfg.time; score=0;kills=0;decaps=0;disrupted=0;corpseActs=0;
+  successfulThreats=0;furyReachedCount=0;completedRituals=0;furyWasActive=false;
   blood=[];feathers=[];corpses=[];decapBursts=[]; decapFlash=0; eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
   threatBtn.textContent='DROHEN'; threatBtn.classList.remove('urge');
   player=makePlayer();
@@ -799,7 +818,16 @@ function resetGame(){
   updateUI();
 }
 
+function showLevelBriefing(level){
+  currentLevel=clamp(level,1,5); running=false; overlay.style.display='flex';
+  intro.style.display='none'; levelBriefing.style.display='flex'; levelComplete.style.display='none'; result.style.display='none';
+  levelBriefingTitle.textContent=`Level ${currentLevel} · ${LEVELS[currentLevel].title}`;
+  levelBriefingQuote.textContent=LEVELS[currentLevel].quote; levelBriefingText.textContent=LEVELS[currentLevel].explanation;
+  levelBriefingGoal.innerHTML=`<b>Ziel</b><br>${LEVELS[currentLevel].objective}`;
+  beginLevelBtn.textContent=`Level ${currentLevel} starten`; beginLevelBtn.onclick=()=>startLevel(currentLevel);
+}
 function startLevel(level){
+  levelBriefing.style.display='none';
   currentLevel=clamp(level,1,5);
   if(!audioUnlocked) primeAudio(); else startMusic();
   running=true;
@@ -814,6 +842,7 @@ function startLevel(level){
 
 function showTrainingResult(success){
   if(levelCompleteLock)return;
+  levelBriefing.style.display='none';
   levelCompleteLock=true;
   running=false;
   overlay.style.display='flex';
@@ -827,21 +856,28 @@ function showTrainingResult(success){
       ? 'Alle Einzelmechaniken sind eingeführt. Im nächsten Level greift die vollständige Kette ineinander.'
       : `${LEVELS[currentLevel].title} ist eingeführt. Als Nächstes: ${LEVELS[currentLevel+1].title}.`;
     continueLevelBtn.textContent=`Weiter zu Level ${currentLevel+1}`;
-    continueLevelBtn.onclick=()=>startLevel(currentLevel+1);
+    continueLevelBtn.onclick=()=>showLevelBriefing(currentLevel+1);
   }else{
     levelCompleteTitle.textContent=`Level ${currentLevel} wiederholen`;
     levelCompleteText.textContent=`Ziel: ${LEVELS[currentLevel].objective}.`;
     continueLevelBtn.textContent='Noch einmal';
-    continueLevelBtn.onclick=()=>startLevel(currentLevel);
+    continueLevelBtn.onclick=()=>showLevelBriefing(currentLevel);
   }
 }
 
+function trackLevelMilestones(){
+  if(currentLevel!==3){furyWasActive=false;return;}
+  if(player.rage>=68 && !furyWasActive){
+    furyReachedCount++; furyWasActive=true;
+    if(furyReachedCount<2){player.rage=8;furyWasActive=false;narrate('Unermessliche Wut einmal erreicht. Baue sie jetzt ein zweites Mal auf.',4.2,true);showThreatHint('UNERMESSLICHE WUT · 1/2');}
+  }else if(player.rage<68){furyWasActive=false;}
+}
 function levelGoalReached(){
-  if(currentLevel===1)return disrupted>=3;
-  if(currentLevel===2)return kills>=1;
-  if(currentLevel===3)return player.rage>=68;
-  if(currentLevel===4)return decaps>=1;
-  return birds.some(b=>b.ritualDone);
+  if(currentLevel===1)return successfulThreats>=3;
+  if(currentLevel===2)return kills>=3;
+  if(currentLevel===3)return furyReachedCount>=2;
+  if(currentLevel===4)return decaps>=2;
+  return completedRituals>=2;
 }
 
 function checkLevelProgress(){
@@ -850,10 +886,10 @@ function checkLevelProgress(){
   else endGame('complete');
 }
 
-function start(){startLevel(1);}
-startBtn.onclick=()=>startLevel(1);
-skipTrainingBtn.onclick=()=>startLevel(5);
-againBtn.onclick=()=>startLevel(5);
+function start(){showLevelBriefing(1);}
+startBtn.onclick=()=>showLevelBriefing(1);
+skipTrainingBtn.onclick=()=>showLevelBriefing(5);
+againBtn.onclick=()=>showLevelBriefing(5);
 resetGame();
 
 function spawnBlood(x,y,n=8){
@@ -914,9 +950,9 @@ function triggerDecapitation(b,nx,ny){
   addScore(750,'Kopf abgerissen');
   shake=18;
   player.locked=.10;
-  player.rage=8;
+  player.rage=(currentLevel===4 && decaps<2)?74:8;
   narrate('Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.',5,true);
-  showThreatHint('TRIEB: den roten Knopf 3× antippen');
+  showThreatHint('KOPULIEREN: den roten Knopf 3× antippen');
 }
 
 function nearestUrgeCorpse(maxDistance=92){
@@ -960,10 +996,10 @@ function performCorpseRitual(){
   }
 
   if(corpse.ritualCount>=3){
-    corpse.ritualDone=true;
-    showThreatHint('TRIEB abgeschlossen · 3/3 · +15 Wut');
+    corpse.ritualDone=true; completedRituals++;
+    showThreatHint('KOPULIEREN abgeschlossen · 3/3 · +15 Wut');
   }else{
-    showThreatHint(`TRIEB · ${corpse.ritualCount}/3 · +15 Wut`);
+    showThreatHint(`KOPULIEREN · ${corpse.ritualCount}/3 · +15 Wut`);
   }
 }
 
@@ -1061,7 +1097,7 @@ function threaten(){
     }
   });
   if(affected){
-    disrupted+=affected;
+    successfulThreats++; disrupted+=affected;
     addScore(60*affected,'Balz gestört');
     player.rage=clamp(player.rage+Math.min(8,affected*1.5),0,100);
     narrate(fled
@@ -1284,6 +1320,7 @@ function update(dt){
     else endGame('time');
     return;
   }
+  trackLevelMilestones();
   updateUI();
   checkLevelProgress();
 }
@@ -1304,15 +1341,15 @@ function updateUI(){
   timeMobile.textContent=timeNow;
 
   levelNumber.textContent=`LEVEL ${currentLevel} · ${LEVELS[currentLevel].title}`;
-  if(currentLevel===1) levelObjective.textContent=`${Math.min(3,disrupted)}/3 BALZ GESTÖRT`;
-  else if(currentLevel===2) levelObjective.textContent=`${Math.min(1,kills)}/1 HAHN GETÖTET`;
-  else if(currentLevel===3) levelObjective.textContent=`${Math.min(68,rageNow)}/68 WUT`;
-  else if(currentLevel===4) levelObjective.textContent=`${Math.min(1,decaps)}/1 KOPF AB`;
-  else levelObjective.textContent=`${Math.min(3,corpseActs)}/3 TRIEB`;
+  if(currentLevel===1) levelObjective.textContent=`${Math.min(3,successfulThreats)}/3 ERFOLGREICH GEDROHT`;
+  else if(currentLevel===2) levelObjective.textContent=`${Math.min(3,kills)}/3 HÄHNE GETÖTET`;
+  else if(currentLevel===3) levelObjective.textContent=`${Math.min(2,furyReachedCount)}/2 WUT ERREICHT · ${rageNow}/68`;
+  else if(currentLevel===4) levelObjective.textContent=`${Math.min(2,decaps)}/2 KÖPFE AB`;
+  else levelObjective.textContent=`${Math.min(2,completedRituals)}/2 KOPULATIONEN KOMPLETT`;
 
   const urgeCorpse=nearestUrgeCorpse();
   if(urgeCorpse){
-    threatBtn.textContent=`TRIEB ${urgeCorpse.ritualCount}/3`;
+    threatBtn.textContent=`KOPULIEREN ${urgeCorpse.ritualCount}/3`;
     threatBtn.classList.add('urge');
   }else{
     threatBtn.textContent='DROHEN';
@@ -1546,7 +1583,7 @@ function endGame(reason='time'){
     Birkhähne getötet: <b>${kills}</b><br>
     Köpfe abgerissen: <b>${decaps}</b><br>
     Balzaktionen gestört: <b>${disrupted}</b><br>
-    Kadaverhandlungen: <b>${corpseActs}</b><br>
+    Kopulationen: <b>${corpseActs}</b><br>
     Verbliebene Birkhähne: <b>${alive}</b><br><br>
     Fortpflanzungserfolg des Rackelhahns: <b>0</b>`;
   intro.style.display='none';result.style.display='block';overlay.style.display='flex';
