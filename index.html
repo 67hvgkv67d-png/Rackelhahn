@@ -428,7 +428,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V31</div>
+<div id="versionTag">V32</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -743,81 +743,146 @@ gameMusicAudio.playsInline=true;
 document.body.append(menuMusicAudio,gameMusicAudio);
 
 let audioUnlocked=false;
-let musicFadeFrame=0,musicFadeGeneration=0;
+let musicCtx=null,menuMusicSource=null,gameMusicSource=null,menuMusicGain=null,gameMusicGain=null;
+let musicFadeGeneration=0,musicPauseTimer=0;
 const MENU_VOLUME=.12;
 const GAME_VOLUME=.32;
 const MUSIC_FADE_MS=2200;
+const sfxPools={};
 
 function safePlay(audio){
-  const p=audio.play();
-  if(p&&p.catch)p.catch(()=>{});
+  try{
+    const p=audio.play();
+    if(p&&p.catch)p.catch(()=>{});
+    return p;
+  }catch(_){return null}
 }
-function crossfadeMusic(fromAudio,toAudio,targetVolume,pauseFrom=false){
+function ensureMusicGraph(){
+  if(musicCtx)return true;
+  try{
+    const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContextClass)return false;
+    musicCtx=new AudioContextClass();
+    menuMusicSource=musicCtx.createMediaElementSource(menuMusicAudio);
+    gameMusicSource=musicCtx.createMediaElementSource(gameMusicAudio);
+    menuMusicGain=musicCtx.createGain();
+    gameMusicGain=musicCtx.createGain();
+    menuMusicSource.connect(menuMusicGain).connect(musicCtx.destination);
+    gameMusicSource.connect(gameMusicGain).connect(musicCtx.destination);
+    menuMusicAudio.volume=1;
+    gameMusicAudio.volume=1;
+    menuMusicGain.gain.value=0;
+    gameMusicGain.gain.value=0;
+    return true;
+  }catch(err){
+    console.warn('Musikkanäle nicht verfügbar:',err);
+    musicCtx=null;menuMusicSource=null;gameMusicSource=null;menuMusicGain=null;gameMusicGain=null;
+    return false;
+  }
+}
+function resumeMusicGraph(){
+  if(musicCtx&&musicCtx.state==='suspended'){
+    const p=musicCtx.resume();
+    if(p&&p.catch)p.catch(()=>{});
+  }
+}
+function scheduleElementPause(audio,generation,reset=false){
+  clearTimeout(musicPauseTimer);
+  musicPauseTimer=setTimeout(()=>{
+    if(generation!==musicFadeGeneration)return;
+    audio.pause();
+    if(reset){try{audio.currentTime=0}catch(_){}}
+  },MUSIC_FADE_MS+120);
+}
+function fadeMusic(menuTarget,gameTarget,pauseAudio=null,resetPaused=false){
   if(!audioUnlocked||!musicToggle.checked)return;
   const generation=++musicFadeGeneration;
-  if(musicFadeFrame)cancelAnimationFrame(musicFadeFrame);
-  safePlay(toAudio);
-  const start=performance.now();
-  const fromStart=fromAudio.volume;
-  const toStart=toAudio.volume;
-  function step(now){
-    if(generation!==musicFadeGeneration)return;
-    const p=Math.min(1,(now-start)/MUSIC_FADE_MS);
-    const eased=p*p*(3-2*p);
-    fromAudio.volume=Math.max(0,fromStart*(1-eased));
-    toAudio.volume=Math.min(1,toStart+(targetVolume-toStart)*eased);
-    if(p<1){
-      musicFadeFrame=requestAnimationFrame(step);
-    }else{
-      fromAudio.volume=0;
-      toAudio.volume=targetVolume;
-      if(pauseFrom){
-        fromAudio.pause();
-        try{fromAudio.currentTime=0}catch(_){}
-      }
-    }
+  clearTimeout(musicPauseTimer);
+  resumeMusicGraph();
+  if(ensureMusicGraph()){
+    resumeMusicGraph();
+    const now=musicCtx.currentTime;
+    const duration=MUSIC_FADE_MS/1000;
+    [[menuMusicGain,menuTarget],[gameMusicGain,gameTarget]].forEach(([node,target])=>{
+      const gain=node.gain;
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(gain.value,now);
+      gain.linearRampToValueAtTime(target,now+duration);
+    });
+  }else{
+    const fromMenu=Number.isFinite(menuMusicAudio.volume)?menuMusicAudio.volume:1;
+    const fromGame=Number.isFinite(gameMusicAudio.volume)?gameMusicAudio.volume:1;
+    const started=performance.now();
+    const step=now=>{
+      if(generation!==musicFadeGeneration)return;
+      const p=Math.min(1,(now-started)/MUSIC_FADE_MS);
+      menuMusicAudio.volume=fromMenu+(menuTarget-fromMenu)*p;
+      gameMusicAudio.volume=fromGame+(gameTarget-fromGame)*p;
+      if(p<1)requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
-  musicFadeFrame=requestAnimationFrame(step);
+  if(pauseAudio)scheduleElementPause(pauseAudio,generation,resetPaused);
 }
 function randomGameTrack(){
   const tracks=musicTracks.game;
   return tracks[Math.floor(Math.random()*tracks.length)];
 }
+function prepareGameTrack(){
+  const selected=randomGameTrack();
+  if(!gameMusicAudio.src||!musicTracks.game.some(track=>gameMusicAudio.src.endsWith(track))){
+    gameMusicAudio.src=selected;
+    gameMusicAudio.load();
+  }
+}
 function startMenuMusic(){
   if(!audioUnlocked||!musicToggle.checked)return;
+  ensureMusicGraph();resumeMusicGraph();
   safePlay(menuMusicAudio);
-  crossfadeMusic(gameMusicAudio,menuMusicAudio,MENU_VOLUME,true);
+  fadeMusic(MENU_VOLUME,0,gameMusicAudio,true);
 }
 function startGameMusic(){
   if(!audioUnlocked||!musicToggle.checked)return;
+  ensureMusicGraph();resumeMusicGraph();
   const selected=randomGameTrack();
   gameMusicAudio.pause();
-  gameMusicAudio.src=selected;
-  gameMusicAudio.load();
-  gameMusicAudio.volume=0;
+  if(!gameMusicAudio.src.endsWith(selected)){
+    gameMusicAudio.src=selected;
+    gameMusicAudio.load();
+  }
+  try{gameMusicAudio.currentTime=0}catch(_){}
   safePlay(gameMusicAudio);
-  crossfadeMusic(menuMusicAudio,gameMusicAudio,GAME_VOLUME,false);
+  fadeMusic(0,GAME_VOLUME,menuMusicAudio,false);
 }
 function stopMusic(){
   musicFadeGeneration++;
-  if(musicFadeFrame)cancelAnimationFrame(musicFadeFrame);
+  clearTimeout(musicPauseTimer);
+  if(menuMusicGain)menuMusicGain.gain.value=0;
+  if(gameMusicGain)gameMusicGain.gain.value=0;
   menuMusicAudio.pause();
   gameMusicAudio.pause();
 }
 function primeAudio(){
   audioUnlocked=true;
+  ensureMusicGraph();resumeMusicGraph();
+  prepareGameTrack();
+  Object.values(audioAssets).forEach(a=>{try{a.load()}catch(_){}});
   if(document.body.classList.contains('overlayMode')){
-    menuMusicAudio.volume=MENU_VOLUME;
     safePlay(menuMusicAudio);
+    fadeMusic(MENU_VOLUME,0);
   }else{
-    gameMusicAudio.volume=0;
     safePlay(gameMusicAudio);
+    fadeMusic(0,GAME_VOLUME);
   }
 }
 function playSfx(name){
   if(!audioUnlocked)return;
   const src=audioAssets[name];if(!src)return;
-  const a=src.cloneNode();a.volume=src.volume;
+  const pool=sfxPools[name]||(sfxPools[name]=Array.from({length:3},()=>{
+    const a=src.cloneNode(true);a.preload='auto';a.volume=src.volume;return a;
+  }));
+  const a=pool.find(item=>item.paused||item.ended)||pool[0];
+  try{a.currentTime=0}catch(_){}
   const p=a.play();if(p&&p.catch)p.catch(()=>{});
 }
 function sfxThreat(){playSfx('threat')}
@@ -826,6 +891,7 @@ function sfxHit(){playSfx('hit')}
 function sfxDeath(){playSfx('death')}
 function updateMusic(){
   if(!audioUnlocked||!musicToggle.checked)return;
+  resumeMusicGraph();
   if(document.body.classList.contains('overlayMode')){
     if(menuMusicAudio.paused)startMenuMusic();
   }else if(gameMusicAudio.paused){
@@ -843,7 +909,11 @@ musicToggle.addEventListener('change',()=>{
     document.body.classList.contains('overlayMode')?startMenuMusic():startGameMusic();
   }else stopMusic();
 });
-
+window.__rackelAudioState=()=>({
+  context:musicCtx?musicCtx.state:'fallback',
+  menu:{paused:menuMusicAudio.paused,time:menuMusicAudio.currentTime,gain:menuMusicGain?menuMusicGain.gain.value:null},
+  game:{paused:gameMusicAudio.paused,time:gameMusicAudio.currentTime,gain:gameMusicGain?gameMusicGain.gain.value:null,src:gameMusicAudio.currentSrc||gameMusicAudio.src}
+});
 
 function logEvent(t){
   const div=document.createElement('div');
@@ -867,7 +937,7 @@ function makeSnow(){
   snow=Array.from({length:160},()=>({x:Math.random()*W,y:Math.random()*H,s:rnd(.6,2.2),v:rnd(18,48),dr:rnd(-16,-4)}));
 }
 function makePlayer(){
-  return {x:W*.48,y:H*.58,vx:0,vy:0,dir:1,r:26,rage:8,attackCd:0,threatCd:0,locked:0,target:null,urgeT:0,urgeTarget:null};
+  return {x:W*.48,y:H*.58,vx:0,vy:0,dir:1,r:26,rage:8,attackCd:0,threatCd:0,attackAnim:0,threatAnim:0,attackQueued:false,threatQueued:false,locked:0,target:null,urgeT:0,urgeTarget:null};
 }
 function makeBird(i){
   const side=i%2?1:-1;
@@ -1146,7 +1216,13 @@ function attack(){
     showThreatHint('Level 1: zuerst DROHEN verwenden');
     return;
   }
-  if(player.attackCd>0 || player.locked>0) return;
+  if(player.locked>0)return;
+  if(player.attackCd>0){
+    player.attackQueued=true;
+    return;
+  }
+  player.attackQueued=false;
+  player.attackAnim=.52;
   sfxAttack();
   player.attackCd=.44;
 
@@ -1213,7 +1289,13 @@ function attack(){
 }
 
 function threaten(){
-  if(player.threatCd>0||player.locked>0)return;
+  if(player.locked>0)return;
+  if(player.threatCd>0){
+    player.threatQueued=true;
+    return;
+  }
+  player.threatQueued=false;
+  player.threatAnim=.82;
   sfxThreat();
   player.threatCd=1.1; shake=4; threatWave=1;
   let affected=0, fled=0;
@@ -1247,8 +1329,12 @@ function threaten(){
 }
 
 function updatePlayer(dt){
-  if(player.attackCd>0)player.attackCd-=dt;
-  if(player.threatCd>0)player.threatCd-=dt;
+  if(player.attackCd>0)player.attackCd=Math.max(0,player.attackCd-dt);
+  if(player.threatCd>0)player.threatCd=Math.max(0,player.threatCd-dt);
+  if(player.attackAnim>0)player.attackAnim=Math.max(0,player.attackAnim-dt);
+  if(player.threatAnim>0)player.threatAnim=Math.max(0,player.threatAnim-dt);
+  if(player.locked<=0&&player.attackQueued&&player.attackCd<=0)attack();
+  if(player.locked<=0&&player.threatQueued&&player.threatCd<=0)threaten();
   if(player.urgeT>0){
     player.urgeT=Math.max(0,player.urgeT-dt);
     if(player.urgeTarget){
@@ -1648,12 +1734,14 @@ function drawPlayer(){
   }
   const urgeOffset=player.urgeT>0 ? Math.sin((1.05-player.urgeT)*18)*2.4 : 0;
   birdShape(player.x,player.y+urgeOffset,1.15,player.dir||1,'rackel',false,true);
-  // spread wings while threatening/attacking
-  if(player.attackCd>.18 || player.threatCd>.55){
+  // Jede ausgelöste Aktion besitzt eine eigene, gut lesbare Animationsphase.
+  if(player.attackAnim>0 || player.threatAnim>0){
     ctx.translate(player.x,player.y);
-    ctx.fillStyle='rgba(19,25,28,.95)';
-    ctx.beginPath();ctx.ellipse(-6,-28,52,12,-.35,0,Math.PI*2);ctx.fill();
-    ctx.beginPath();ctx.ellipse(3,-27,52,12,.35,0,Math.PI*2);ctx.fill();
+    const attackPhase=player.attackAnim>0;
+    const pulse=1+Math.sin(performance.now()/55)*.06;
+    ctx.fillStyle=attackPhase?'rgba(24,27,28,.98)':'rgba(19,25,28,.95)';
+    ctx.beginPath();ctx.ellipse(-6,attackPhase?-23:-30,52*pulse,attackPhase?15:12,attackPhase?-.18:-.38,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(3,attackPhase?-22:-29,52*pulse,attackPhase?15:12,attackPhase?.18:.38,0,Math.PI*2);ctx.fill();
   }
   ctx.restore();
 }
