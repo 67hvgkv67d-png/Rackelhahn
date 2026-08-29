@@ -283,11 +283,32 @@
   }
 
 
+  /* V18: Naturdoku-Text direkt unter Status und Wutbanner */
+  #narrator{
+    top:104px!important;
+    bottom:auto!important;
+  }
+  @media (pointer:coarse), (max-width:900px){
+    #narrator{
+      top:max(72px,calc(env(safe-area-inset-top) + 68px))!important;
+      bottom:auto!important;
+      width:min(90vw,540px)!important;
+    }
+    #narrator .panel{
+      text-align:center!important;
+      line-height:1.28!important;
+    }
+    #threatHint{
+      top:max(132px,calc(env(safe-area-inset-top) + 128px))!important;
+    }
+  }
+
+
 </style>
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V17</div>
+<div id="versionTag">V18</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
