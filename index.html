@@ -312,7 +312,7 @@
 </head>
 <body>
 <div id="wrap">
-<div id="versionTag">V21</div>
+<div id="versionTag">V22</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -703,7 +703,7 @@ function triggerDecapitation(b,nx,ny){
     y:b.y-8,
     vx:nx*220+rnd(-40,40),
     vy:-140+rnd(-35,20),
-    life:8,
+    life:60,
     r:10,
     rot:0,
     vr:rnd(-9,9)
@@ -1204,7 +1204,6 @@ function drawBird(b){
     ctx.beginPath();ctx.ellipse(7,1,8,3,-.18,0,Math.PI*2);ctx.fill();
     ctx.restore();
 
-    // Der hellrote Kreis bleibt die einzige Interaktionsmarkierung.
     ctx.save();
     ctx.globalAlpha=.58;
     ctx.filter='grayscale(1) brightness(.58)';
@@ -1217,15 +1216,18 @@ function drawBird(b){
       ctx.beginPath();ctx.arc(stumpX,b.y-8,5.2,0,Math.PI*2);ctx.fill();
     }
 
-    if(b.ritualReady && !b.ritualDone && dist(player,b)<112){
-      const pulse=1.5+Math.sin(performance.now()/170)*1.5;
-      ctx.strokeStyle='rgba(222,124,132,.66)';
-      ctx.lineWidth=1.6;
-      ctx.beginPath();ctx.ellipse(b.x,b.y,35+pulse,23+pulse,0,0,Math.PI*2);ctx.stroke();
-      ctx.fillStyle='rgba(250,232,233,.92)';
-      ctx.font='700 9px Inter,system-ui,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText(`TRIEB ${b.ritualCount}/3`,b.x,b.y-29);
+    if(!b.head && b.ritualReady){
+      // Kleine, starre Feder- und Körperfragmente machen die zerfetzten
+      // Überreste lesbar, ohne einen künstlichen Zielkreis einzublenden.
+      ctx.save();
+      ctx.translate(b.x,b.y);
+      ctx.fillStyle='rgba(35,39,41,.76)';
+      ctx.beginPath();ctx.ellipse(-25,13,7,2.2,-.42,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(19,14,6,2,.34,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(-10,-15,5,1.8,.82,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(102,25,29,.55)';
+      ctx.beginPath();ctx.ellipse(13,8,5,2.2,-.28,0,Math.PI*2);ctx.fill();
+      ctx.restore();
     }
     return;
   }
@@ -1271,7 +1273,19 @@ function drawParticles(){
   // blood + detached head
   blood.forEach(p=>{
     if(p.isHead){
-      birdShape(p.x,p.y,.34,1,'birk',false,true);
+      // Der abgerissene Kopf bleibt als klar erkennbares Objekt liegen.
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot||0);
+      ctx.fillStyle='#171d20';
+      ctx.beginPath();ctx.arc(0,0,7.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#b9b7aa';
+      ctx.beginPath();ctx.moveTo(6,-2);ctx.lineTo(15,1);ctx.lineTo(6,4);ctx.fill();
+      ctx.fillStyle='#b72d2d';
+      ctx.beginPath();ctx.ellipse(1,-6,4.5,2.2,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(112,24,28,.82)';
+      ctx.beginPath();ctx.arc(-6,2,3.2,0,Math.PI*2);ctx.fill();
+      ctx.restore();
     } else {
       ctx.fillStyle=`rgba(112,24,24,${clamp(p.life*1.4,0,.9)})`;
       ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fill();
