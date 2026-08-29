@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Rackelhahn – Ein unfruchtbarer Bastard | Prototyp</title>
-<meta name="theme-color" content="#080d0f">
+<meta name="theme-color" content="#070a0c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Rackelhahn">
@@ -436,11 +436,61 @@ body.freePlay #levelHud{display:none!important}
 /* V31: Das Spielfeld darf auf Mobilgeräten nicht zoomen oder verrutschen. */
 html,body,#wrap,#game,#touchControls,#overlay{touch-action:none!important;overscroll-behavior:none}
 html,body{width:100%;height:100%;position:fixed;inset:0}
+
+  /* V35: ein großer Kontextknopf und volle iOS-Web-App-Fläche */
+  :root{--app-height:100dvh}
+  html,body{
+    width:100vw!important;
+    height:var(--app-height,100dvh)!important;
+    min-height:var(--app-height,100dvh)!important;
+    background:#070a0c!important;
+  }
+  #wrap,#overlay,#card{
+    width:100vw!important;
+    height:var(--app-height,100dvh)!important;
+    min-height:var(--app-height,100dvh)!important;
+  }
+  #wrap{position:fixed!important;inset:0!important}
+  #attackBtn{display:none!important}
+  #touchButtons{
+    grid-template-columns:96px!important;
+    right:max(12px,env(safe-area-inset-right))!important;
+    bottom:max(12px,env(safe-area-inset-bottom))!important;
+    gap:0!important;
+  }
+  #threatBtn{
+    display:block!important;
+    width:96px!important;
+    height:66px!important;
+    padding:0 7px!important;
+    border-radius:17px!important;
+    font-size:11px!important;
+    line-height:1.1!important;
+    letter-spacing:.025em!important;
+  }
+  #threatBtn.attack{
+    background:rgba(46,51,54,.88)!important;
+    border-color:rgba(235,240,242,.32)!important;
+  }
+  @media (pointer:coarse), (max-width:900px){
+    #result{
+      height:var(--app-height,100dvh)!important;
+      box-sizing:border-box!important;
+      overflow-y:auto!important;
+      -webkit-overflow-scrolling:touch;
+      padding:max(24px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;
+    }
+    #levelBriefing,#levelComplete{
+      box-sizing:border-box!important;
+      padding:max(24px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;
+    }
+  }
+
 </style>
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V34</div>
+<div id="versionTag">V35</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -480,7 +530,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 <div id="touchControls">
   <div id="joystick"><div id="stick"></div></div>
   <div id="touchButtons">
-    <button class="touchBtn" id="attackBtn">ANGREIFEN</button>
+    <button class="touchBtn" id="attackBtn" aria-hidden="true" tabindex="-1">ANGREIFEN</button>
     <button class="touchBtn" id="threatBtn">DROHEN</button>
   </div>
 </div>
@@ -603,14 +653,23 @@ let threatWave = 0;
 
 
 let W=0,H=0,dpr=1;
+function appViewportHeight(){
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  const visible=Math.round(window.visualViewport?.height||innerHeight);
+  const fullScreen=Math.round(window.screen?.height||visible);
+  return standalone?Math.max(visible,fullScreen):visible;
+}
 function resize(){
   dpr=Math.min(2,window.devicePixelRatio||1);
-  W=innerWidth; H=innerHeight;
+  W=innerWidth; H=appViewportHeight();
+  document.documentElement.style.setProperty('--app-height',H+'px');
   canvas.width=W*dpr; canvas.height=H*dpr;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 }
-addEventListener('resize',resize); resize();
+addEventListener('resize',resize);
+window.visualViewport?.addEventListener('resize',resize);
+resize();
 
 const keys = {};
 addEventListener('keydown',e=>{
@@ -656,8 +715,8 @@ attackBtn.addEventListener('pointerdown',e=>{e.preventDefault(); attack();});
 
 threatBtn.addEventListener('pointerdown',e=>{
   e.preventDefault();
-  if(nearestUrgeCorpse()) performCorpseRitual();
-  else threaten();
+  e.stopPropagation();
+  contextAction();
 });
 touchControls.addEventListener('selectstart',e=>e.preventDefault());
 touchControls.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1004,7 +1063,7 @@ function resetGame(){
   attackBtn.disabled=false;threatBtn.disabled=false;
   if(currentLevel===6){storedBestScore=loadHighScores()[0]?.score||0;}
   blood=[];feathers=[];corpses=[];decapBursts=[]; decapFlash=0; eventlog.innerHTML=''; allDeadCountdown=-1; threatWave=0;
-  threatBtn.textContent='DROHEN'; threatBtn.classList.remove('urge');
+  threatBtn.textContent='DROHEN'; threatBtn.classList.remove('urge','attack');
   player=makePlayer();
   if(currentLevel===5)player.rage=35;
   birds=Array.from({length:cfg.birds},(_,i)=>makeBird(i));
@@ -1239,10 +1298,25 @@ function performCorpseRitual(){
   }
 }
 
-function secondaryAction(){
-  if(nearestUrgeCorpse()) performCorpseRitual();
-  else threaten();
+function nearestAttackTarget(maxDistance=82){
+  return birds
+    .filter(b=>dist(player,b)<maxDistance&&(b.alive||b.head))
+    .sort((a,b)=>dist(player,a)-dist(player,b))[0]||null;
 }
+function contextAction(){
+  if(currentLevel===1){
+    threaten();
+    return;
+  }
+  if(nearestUrgeCorpse()){
+    performCorpseRitual();
+  }else if(nearestAttackTarget()){
+    attack();
+  }else{
+    threaten();
+  }
+}
+function secondaryAction(){contextAction()}
 
 function attack(){
   if(currentLevel===1){
@@ -1615,13 +1689,19 @@ function updateUI(){
   else if(currentLevel===4) levelObjective.textContent=`${Math.min(2,decaps)}/2 KÖPFE AB`;
   else if(currentLevel===5) levelObjective.textContent=`${Math.min(2,completedRituals)}/2 KOPULATIONEN KOMPLETT`;
 
-  const urgeCorpse=nearestUrgeCorpse();
+  const urgeCorpse=currentLevel===1?null:nearestUrgeCorpse();
+  const attackTarget=currentLevel===1?null:nearestAttackTarget();
   if(urgeCorpse){
     threatBtn.textContent=`KOPULIEREN ${urgeCorpse.ritualCount}/3`;
     threatBtn.classList.add('urge');
+    threatBtn.classList.remove('attack');
+  }else if(attackTarget){
+    threatBtn.textContent='ANGREIFEN';
+    threatBtn.classList.remove('urge');
+    threatBtn.classList.add('attack');
   }else{
     threatBtn.textContent='DROHEN';
-    threatBtn.classList.remove('urge');
+    threatBtn.classList.remove('urge','attack');
   }
 
   const furyOn = player.rage >= 68;
