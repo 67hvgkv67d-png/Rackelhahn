@@ -342,7 +342,18 @@
   #levelObjective{overflow:hidden;text-overflow:ellipsis}
   .levelStartChoices{display:flex;flex-direction:column;gap:10px;align-items:center;width:min(430px,100%)}
   .levelStartChoices .introStart{width:100%}
-  .secondaryStart{background:rgba(255,255,255,.06)!important;color:#e6ecef!important}
+  .moorStart{
+    background:linear-gradient(180deg,#e7ecef,#cbd4d9)!important;
+    color:#101619!important;
+    border-color:rgba(255,255,255,.65)!important;
+    box-shadow:0 10px 30px rgba(190,205,212,.18)!important;
+  }
+  .tutorialStart{
+    background:rgba(255,255,255,.045)!important;
+    color:#aeb9be!important;
+    border-color:rgba(255,255,255,.13)!important;
+    box-shadow:none!important;
+  }
   #levelComplete{
     display:none;
     width:100%;
@@ -428,7 +439,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
 </head>
 <body class="overlayMode">
 <div id="wrap">
-<div id="versionTag">V32</div>
+<div id="versionTag">V33</div>
 <canvas id="game"></canvas>
 <div id="mobileHud"><span>Wut <b id="rageMobile">0%</b></span><span class="mhSep">·</span><span>P <b id="scoreMobile">0</b></span><span class="mhSep">·</span><span>Hähne <b id="aliveMobile">0</b></span><span class="mhSep">·</span><span id="timeMobile">01:00</span></div>
 <div id="furyBanner">UNERMESSLICHE WUT</div>
@@ -479,7 +490,7 @@ html,body{width:100%;height:100%;position:fixed;inset:0}
       <section class="introPage active"><img class="introHero" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABMNDhEODBMRDxEVFBMXHTAfHRoaHToqLCMwRT1JR0Q9Q0FMVm1dTFFoUkFDX4JgaHF1e3x7SlyGkIV3j214e3b/2wBDARQVFR0ZHTgfHzh2T0NPdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnb/wAARCADDAQQDASIAAhEBAxEB/8QAGgAAAgMBAQAAAAAAAAAAAAAAAgMAAQQFBv/EADQQAAICAQMDAwIEBQQDAQAAAAECABEDEiExBEFREyJhMnEFQoGRFCNSobHB0eHwM0Ny8f/EABYBAQEBAAAAAAAAAAAAAAAAAAABAv/EABgRAQEBAQEAAAAAAAAAAAAAAAARASEx/9oADAMBAAIRAxEAPwBSkS4IO0smbZWIQMAGWDAapEYFuZtag7sB+sB82bApdKyr4A3H7QNoWGJzMf4zjJrJiZfkG5tw9Zgz7Y8gJ8HYwHS5UkC5cGXcC5JVyoFywYNywYB2e0sGADLBhR3IIFwgZA1ZpwrcyKZqwuAZNXG1MQqVlx7QkyioGXMKmVY8oqZ2jcr2ZnZprE1RMGQmVNMrMqVclwJcqS5RMC5INyQOeDRh2CLgngSlgW+RcY1OQo+Zi6jq8eWgvq0Oa2BmjqhjKXlvbgjmc7IxJGnGQB/VzJq4FyrD24tIvzBsKSBqU+RtCIZq7SVkFjUKGxsyKjNrv3swHxKW62b3DYXtKdmO5JP24kRXZhQuBqTqc2P6Xaxtd/8AbnQ6P8UXKfTzgJk89jOUNjpJswXUNZI913fcSo9PclzidN+IZMFLkp8Y/edXDmTMurGbH+JUOuKydVhxkh8qKRyCYj8Q6h+n6Yvj+omgfE4ubMOsXWRWdR7q/OPP3gdvrOuHS4UyhDkRu4NRHS/i6Zcox5F0lmpT2+LnGx9Q74TgYllu1HiLVXLgKPcOIV6nB1mLN6lGvTbS17TRc8xjckdSzUDkWyO3ImvofxNsAXD1AJXs3cQjugy7gAy7gMBhq8SLs3XxLuRWoZiO8pstzPqlapItMZriyZRaVcqLMqS5UqITAZwJZMXkqAQe5dwQBUuBRO8kkkDn6jIDK55kIKmjzAmQB1Oo0BvYmHNn1+3EpYD8zTbp1Ag8GKf0enAJSz2EmrjEuPI/k9thLKY8X1+9h+W45smbqDpHsT+lYNY8RpQHf/EiqX1Ct0qL27QgzD81faQqfqymz2EFm8CoC8uzalJ+blow/cSMNa1vfaWcZQe8gH+kcwBexvW0mHqn6XMHW9Pf5jANSkKP2/1MztpcMNj/APJsSoZ1nU5M2ZiSdJ4W9qmdQ31AHbcGEgORDib61Fr8iADWx5HmAeFTkzM2IVW9XuJVe9tR/wCZSKfTJpjvwBGfSlBhqrhTAHCwCk9/B4P3jmUHSdwe6ckDt+m8zIT7u8amxRzRVTW/G8DqfhXW5cnUnG7a1Yav/mdkHaeSLsgGgldQqv8Av6Tqfg/UFGOLLkAB+hTzcqOzclypIF3KuVKuBdyXKuS4F3ITUomKbUSQOIFnJAZrIl6CO8A7MPvAaurvCqWKMuUAZIUkDmbgSyb3PMvtJW0gnErSpIJUEjzLoywCYGV/VzWmJdGMGieLgMMfS0D7n8CbwKEVj6XGrlmtiTe8kWsDs+75BXgRakudv1JnQ6zp3z5NQ3UDiIx9G7BmyjQi713kUpXqxj+r+r/aTYX3buxN1K9zBigpfMZiwuyWFIUeBzApRqIBcgfeIzag5vb9gAP8xy7EDgHsOTFdZdgkDihyTKhNEtqU+9RcewTOFddIfuDwYgayaUCgeYw4XxZP5hAJBbTAYuHKDu9L5vtDGPGq6CxIO9cCCzae5q6+wiPUJBJ2GkBYGkekBSjjj/mUBio7i3P7TJrJBra+IQy778wNPpoKC0SLNmM6TH0+HL6vUMxrcADkzIuS+TGiiK7CB21/FOlY/WR9xNKZEyLqRgw8gzyT0rEAmhHdN1OTC2rGxEUj1FyGYuk6sdQPDdxNkqJKuUTRlahKCliL1ipfqCATVEZDuPv2jCS3Aisi0V7bwG44yLQV3jLgVJAL7yQMREvtIWsSpAZqpBBlgwClwZcCxC7bwZdwL0IVoqK8VDUBRQ2HxAuWDAwdViKuWTGVU7XdTJkcIlNueBY2/SdjLjGVaJPHnac3Ji6fGxRsgd+K7CpFc45nRhoPB2vtNTMFw6jfuO5O5mfqcPplWHfzGnIWQFea8/2gKdjQHfi/O9gxTGzLYj8u3x4iy37yAgaPMn5u5gWAYauALAv9IBjtR4jzkK7EUREatR9n7QWJ1kb8QvI1aPU94Wwe8oBAeKrtOr+H4PT6NVyDd9yDK6noUfdKU+JYlYEf02D42II3nT6X8RVwFy+0/wBXacnLhyYXI3Ii1ydj+klV6YkMLUgg9xArmzOLh6zJhOxOn9xOhg65Muz0p89pqpGpRcE7GENhKPMqIrkQclkg/MvgQcjbCQOXiC2QjaUGi33MCF7O8kAg3JAGvMICMC/Elb7QF73KjaB5l6BAWJdV3hcbSbfECiZUta07mEKIgVcgl1UgMCXOL1udMudgigKPAqzOr1WVceBm/SpwshvcnfkgeTJpheQkgajuIK5Sm10p+JCDp1He4Bq+8jRmSjRU+2KO0h83tIASLqBR3hKCf+8QbAPH6TR0WFupzBOF5Y/EDVg6FnRMw3Tk3zXmN6fDhZFzO267OO33nUVQMelQAKofE4WVRid8TkrzuDzG8M67n8RhJoZU343hHfiebelUKtb7XGYupy4CAjsK7XtNZqbkd8qGDAiwZjy/hqMLxkqa794PR/iJytpynng1/mdAWYHMy9G+LCrbFl2NdxFFdKh1+lv7HxOz94jLhQggKAG+oD/MkKzdL1hxnQ4JXx4nQBDAMpsHvOU+EgkckcEdxHdNmOLiyBuwH+RGabje0BlsQgwZbHBgM5VgK2lQROkWZR3lFrBkXJY2ECSSa/IkgQbXvXzKuhZNxX8WngmviDlzasRZQQQQd/vCngeRUNQRy1zJlzve3NcQ0bIWFaf1gP77gn9Jew/LFE5r2IlFm/Of37QCdir0aEFMwBK0L7VFay+UEG1EdpQsdtyP0kE/iBz8yxlJMR1AXEiOO5AJPYGaBgagd6gC383IliwvuH+JyuvwlMzMo+vcGdPLeIhuBxtzM3VL6uA2QSvaBxW2Om7HMiqCDcfmxCg1kE9z3/5k9F2y0Kr+oihIpOoL8n7SG2AvjsJpHR5Gf2qCfiTN0j4AjZNgYGbHibLlGNBbHYT0HSdMOmwhUG/c+TMn4fjXGnqqLZ9qm7Jm9JAXoE/2jEHbtyp/xE9R06ZiDkTjxDTK2QWDX2lOzgXdD5lHAyKfUKsNJBqpHsVdgTX1PSBnLBzrfepkz4smNv5gPi+0LFI3uFcd53elzerhViTdUfvPO2Z2OgGX+GBC3ZNXCOgWBPMl33Ii11E0y1/iMCe3nbwYFGjsG/XxEviK+/GQCNx4+R9o/eyAAaHESr2hs3ewrvAmLLpYaTWNjwfynxJkysGFbwcgo9grc12MpXYsq6RfeviBBkzatx7fMacgXfeAcmQf+uxDVvKi4A+qx3ANSRm32kgZx1CWPbufiLbqDkGkLX3jFzo2zIJHRHYONj4gAVYp7eb/ALRYfI9HHYN1XJE0rlVDT1xCObGvxcAfTar9TSb4hHA2ZfbkHzEZsj8IAQfncysDZMbByTvzAYcRxjnUb7GTFl1ezggbXFZszGiG28ylIDkvttsQeYA9XkL5TjHuGmx947o+sY4MmrIQwAAmPILX2e10N35+0zZGBOobA8jxA7R6kZUABs+L/uIkuG1MSpABHExYc/pgUCdqsS8vUs4oBVHF+ZBpylWQKV2Peq3gdOwHTqrUG492978zPkc2gvWuzWTuYrIxZyynTfYdpR0G6vHj9oZVPbTvv3g5+sxZ0VW5PPac06rsE35gkjmzfeRW7pmbBkOndCeL7+Zpbqg6uKYk7Uw2qctMzLttX2jseZnOkXZ8QeupiekAtQW3qBmzFQVPPJqYWzuooUxG1+IBdsuUIG9xFEjsIqx0MeUHPqKbA0NuJoOjIKdLU+ZkbqlxquEKXI8f6zQHutSWD2BuvkQms2X8Pws1qCKNkAx+s4caAEChx42i85KKSRQbv5/7UyMSV3sjjbvA2hnyNswCf9MYH9GmZrANbTLjJCjUaXz4hO4ysUX+m4Dz1BZfa3u/4uK9QY3LNTDjiZg+jLR7bGQuTbGqIoeBFRufLjyuVquwMIFg+pRvWkXyZzsZYtZOnfjiaQ+XHTGy3PMo2LkYEhhdGoa5EbZqB8VMidWqrVDYRgyY2IJ+r5gaqQ9j+kkRj6jGQdwu+1yShOTpkv66PIg48BFHUa7ysHUFgW0gncQWzOdkAPmv8TKnY1xMz2dl895TrjZa7dje9xGNyxK8En9JGLYnOtTVdpUCuQ4G93/jg5OtxNsgJPahGDFh6ldbMQvEHK2Do7KkE9lA5kUlNTEk42I+do7+NpQhw6qv4mPJ1WbOaF6fEipkrYrtuTzUDTmyLmB9np7bVMxxOdxR+0mhgQSSWPAl6Mo5Yj4BgQYWUC9h87yaG40/2lAkn+YT87XBPqObUkrxzCG0Amkc37totufiUHbGbZbHG8DWJRPMmwFgfvAZvEEA7EyBgNcVNbqvpgUCx39pqZ7CYgPab8jcGKD6WBHaFaR1CshTIoBrkbRCsyuxA37Si18ijCTniFrZ0udQQrKCRuDN+XIrYSVJBUXQ7/acTYcbzQnUgKA1muDcqHnqvXXQ3AN77RuPEoxlzkAJ3mR82Mp/U3z2iDlY9yfiRGl8pPNmGmTYHwdorEGK7V8y9Jvt8wpmRfV0jYEckdoKIzPpYhVbaz2lou1ltuK8mFZU/wBVwF5MTBtC2SDzcJmdlAZjp+e00WumtVCMGNGAGtd/iVGQKTuDvfnaaFdVpHGoE7EefE0Do8THcgeK7ysnRsgJQ2e19hECjiRubNbbGSCMeVRWm/sJIF9OMbYrTjsD2MLHgXGpZm3P5pagIrAVZ34iyyse5NUIAdSoTJamr7wD1OXQUClwYxk1Kq3Z8eIC48q76dvPzAzucosaCAeRVCIfExNmv9p0jky0AMQ34JiiMuogBLHNiRWXGuRmoLXjxHDDkQ1p5jhg6gi2OlSeYQwMy36pI73zAzoKbSQb83EZVdCQXvvNysMZZUUGt7bvI1ZOcaD9K/vA54yuNioMEksSbKVOg3RnTq0+3uRvKPSYnA07tV0DzEGDIGYrvtV8xYW+TtN56YWGIGkdr2im6YlzpFDmvEQVgw4XNlipHYHmDlxop9h1AnbyYRxFVNkCt+IWDGTY5NceRFIU2KwabcfEb0eFXZmcbccTQ60u/P24ES4JHtP94qwnqMAVicbArE0yrqIreppXdgbvsTGhDm1Kx4gjAG32H6zR6ILWGFHnbiObpsmMe3H7RzLGUqBS6d63EIDF0qF1tuTVkTR/DL0wbJ6QdRxbRpXJnqgpHgHtF+ljUj1NR8gk1Khap6jFlPpIYz+GXRbZr2oUIzQoxEtzdEA8TN6hUsncnj7QrR/DGhfN2KlpjKfUPj/8iMXV6nRH4G1mbBWqxufEIWgQ6T2qxcINj+khR2siZ8qsua1O3jwY/DzqYWBtVf3MBnoLZ9J2scg8Rimx9TX9+8Wc4ugRXxtKYiwxvfxAfzvpB+8kXdVQqSUBjYlbb964lEhnYXROwiVzAdPVi+0HExGQMPduRJVhiY9GSgdjNK7j3H9JmOUFy4PwIbOCDWw019oQWuw2ncDZb4MU5yFwq0ewYdpSNq76a4IjgFr6R5q63+RApAVxNrIA+eYsZLYvuFIoHuZTgslDck9o0rpO97bkQFgsWoqSCbJhslUBsK4EMHStHaj/AGii2sELe/jmAQayVobTK+rE5yBqBNV3msKCaHBPEP00UWVD/K9vi4CN1FnTpsHTd/a5RxjbHpBPJF95XVaVbSgKi7O1RRf3sxbbtvzCrc4y5UbqvN8CRTRJYFEbgjn9ICBcjAupCDbbvHoRRFggnvwPtIBXEwJKliH2oCqljpDkBRbBXsBtGpYJZVJY7ajyY3XrpA5UrzR+qXgxP07IwDlQ5H08Ro6dh7UFaNypP1TQWysoY41IB/NDK2w1YhTHkbGIlYgzIQ3UK99qNyy+EsaRtV796M2j6XPCjfSf94ln3BZQAOCB2/aULXAoykrrI+xN/rGdUMfpWvb6hfEhzkABWGxuhsJDkUrpIBXi+ZBkZwvtw3bee48QbDe4qNa8itxCJ6aypUi+/iF6VUbtANmB/sZFKKqzLRNnjvc0q6kiuf7rAXEoQ6vcvwNxKKaTrsADgj80DQVGQWDv3rvM+fI6k8ECjtwIAzFCSCB+sYmVM4pt18VCFY3LhS5ob7jvH6i10LI4HxBPTaW17BeftKCfzFKAql833+YGsEACzJAdU1fzDv8AeSUc4aj8Q8RKg6uK2iweNiYzGp1Bm4EyozW9kKPgytYC6UlMuo7njkQ16RhTUdMotFdgNMMo4oGh/rGY0ULs297gQv4Yk6j33G8sQvEPeN9z2B4mxcdAW293cwnpM+q73PjaXlbIgCDISIGpsSMCpNlufJgqi4bIJI7/AAYgMdQ1E148x2TIpTRyx7ygAbXJkqtqUS8AKoosXe5PmBpckICKTkf7Q8YV/r1hRtQ/1kC8yXkLEagdzZNmUcQIrfzbdo9UU4SAdTbwXwM5BFG+eYUKYrT+UbC77+YAwasaulbtRUckzXjxhgBkVqHfiHnb0mGRFFC7B4vzESs+LDlJLA0hOxB/zHaKcK6qBxqgUwxeoLJ+Npky58wf0/rDb0dv0jwblVWcqhvSexgj1BuHJIJvbmZOmzku4RqB3IPNx/RvkyaletN0fMAn6g4iQ622rbe7icudifntXf7zXkCY6pTsNjYsn5+JjfGzMdZocgCNXCh72Gm6HIMap3sDY7VCpasgEDvFHIEY815PeQW3SrkPcDzC9L0mN7IRVEftHY8gatPeVnIOA6vqXvKEMhAJXU47n4+0DQWXURt2H+814SSQ5rwJCo9M6zQ+O8I5uUahSqOdz3hYcWRRsa3u50sSYn+mq+ZCFVnAq17eYgyYxkBs83xNCkYxbcnhZahGF6uOJAtrqAFnzAyNiyZmLkc/NSTQFLblf3kiBOMD+HZq38w8gC6ABQ2kkkUnIKcEf1zQzEdNkAJFHaSSMEViXW/6ZqxMSq2fyySTWIrW2hvceJCoI1EDVXMkkISyhSoAoXJi3135kkkUrH/50+eZsysQABwRJJGCjscYGwjOk/1Mkko1lRout5g/EDS46/qkkjUwOorloGgEJqKKhgbHaSSFEMaDOlKN9z94lDXUrX5rv95JJBoyMVOUrsTtfxUQjH0F37ySSKmUn1VHbaZc++SSSTVxp6Lc5AeNMZmFgk90kklzxN9B05P8OTf5ZWD350D7j5+0kkoQ7smVtJqmNVJhY2TZvaSSZDczEKwB2IBjMJN49+JJJQ7KafaSSSaR/9k=" alt="Rackelhahn im winterlichen Moor"><div class="introShade"></div><div class="introInner introFront"><h1 class="introTitle">RACKELHAHN</h1><p class="introSub">Ein unfruchtbarer Bastard.</p></div><div class="introHint">Tippen zum Fortfahren</div></section>
       <section class="introPage"><div class="introInner"><p class="introBig">Über Nacht ist das Wetter umgeschlagen.</p><p class="introSmall">Nebel und Schneegrieseln behindern die Sicht am Teufelsmoor. Eine gedämpfte Stimmung liegt in der Luft.</p></div><div class="introHint">Tippen zum Fortfahren</div></section>
       <section class="introPage"><div class="introInner"><p class="introBig">Du bist der Rackelhahn.</p><p class="introSmall">Mutige Birkhähne wagen sich gefährlich nah. Nähe, Balz und rote Rosen steigern deine Kampfwut.</p><div class="introControls"><div class="introBox"><b>Bewegen</b><br>WASD / Pfeile oder linker Handy-Stick</div><div class="introBox"><b>Angreifen</b><br>Leertaste oder ANGREIFEN</div><div class="introBox"><b>Drohen</b><br>E oder DROHEN – stört die Balz und kann Hähne vertreiben</div><div class="introBox"><b>Ziel</b><br>Dominiere den Balzplatz, bevor die Nacht fällt.</div></div></div><div class="introHint">Tippen zum Fortfahren</div></section>
-      <section class="introPage"><div class="introInner"><p class="introBig">Der Birkhahn ist besonders mutig – und das Unheil nimmt seinen Lauf.</p><p class="introSmall">Fünf kurze Trainingslevel führen nacheinander Drohen, Töten, unermessliche Wut, Kopfabriss und Kopulieren ein. Danach beginnt das freie Spiel um den persönlichen Highscore.</p><div id="highScoreIntro" class="sub"></div><div class="levelStartChoices"><button id="startBtn" class="introStart">Training bei Level 1 beginnen</button><button id="skipTrainingBtn" class="introStart secondaryStart">Direkt ins freie Spiel</button></div></div></section>
+      <section class="introPage"><div class="introInner"><p class="introBig">Der Birkhahn ist besonders mutig – und das Unheil nimmt seinen Lauf.</p><p class="introSmall">Im Tutorial lernst du nacheinander Drohen, Töten, unermessliche Wut, Kopfabriss und Kopulieren. Danach wartet das Teufelsmoor und die Jagd nach dem persönlichen Highscore.</p><div id="highScoreIntro" class="sub"></div><div class="levelStartChoices"><button id="skipTrainingBtn" class="introStart moorStart">Zum Teufelsmoor</button><button id="startBtn" class="introStart tutorialStart">Tutorial beginnen</button></div></div></section>
     </div>
 
     <div id="levelBriefing"><div class="levelBriefingInner">
@@ -564,7 +575,7 @@ const LEVELS=[
   {title:'UNERMESSLICHE WUT',objective:'Unermessliche Wut zweimal erreichen',time:65,birds:5,intro:'Level 3: Erreiche zweimal unermessliche Wut.',quote:'„Seine Kampfwut steigert sich so weit, dass er dem Birkhahn den Kopf abreißt und wegschleudert.“',explanation:'Wut wächst in der Nähe balzender Hähne sowie durch erfolgreiche Aktionen. Ab 68 beginnt UNERMESSLICHE WUT. Nach dem ersten Erreichen wird sie für den zweiten Trainingsdurchlauf zurückgesetzt.'},
   {title:'KOPF ABREISSEN',objective:'Zwei Köpfe abreißen',time:45,birds:4,intro:'Level 4: Reiße zwei Köpfe ab.',quote:'„Auf die roten Rosen am Kopf des Birkhahns ist er besonders fixiert.“',explanation:'Ein toter Birkhahn kann mit UNERMESSLICHER WUT erneut angegriffen werden. Dadurch wird sein Kopf abgerissen. Für dieses Training liegen zwei erreichbare Kadaver bereit.'},
   {title:'KOPULIEREN',objective:'Zwei Kopulationssequenzen vollständig von 1 bis 3 ausführen',time:120,birds:7,intro:'Level 5: Schließe zweimal KOPULIEREN 1 bis 3 vollständig ab.',quote:'„Trotzdem kopuliert der Rackelhahn mehrere Male auf dem leblosen Körper.“',explanation:'Jetzt greift alles ineinander: Drohen, töten, Wut aufbauen und den Kopf abreißen. Level 5 beginnt mit 35 Wut. Jeder Kopulationsschritt gibt +15 Wut; eine vollständige Dreiersequenz zusätzlich +20 Wut. So reicht die Wut sicher für den nächsten Kopfabriss.'},
-  {title:'FREIES SPIEL',objective:'Erziele möglichst viele Punkte und überbiete deinen persönlichen Highscore',time:60,birds:9,intro:'Freies Spiel: Alle Mechaniken sind aktiv. Erziele so viele Punkte wie möglich.',quote:'„Die Natur kann schön sein, aber auch grausam.“',explanation:'Alle Mechaniken sind freigeschaltet. Du hast 60 Sekunden für Drohen, Töten, Kopfabrisse und vollständige Kopulationssequenzen. Die Runde endet früher, sobald alle Birkhähne tot sind. Deine fünf besten Ergebnisse werden lokal in diesem Browser gespeichert.'}
+  {title:'ZUM TEUFELSMOOR',objective:'Erziele möglichst viele Punkte und überbiete deinen persönlichen Highscore',time:60,birds:9,intro:'Zum Teufelsmoor: Alle Mechaniken sind aktiv. Erziele so viele Punkte wie möglich.',quote:'„Die Natur kann schön sein, aber auch grausam.“',explanation:'Alle Mechaniken sind freigeschaltet. Du hast 60 Sekunden für Drohen, Töten, Kopfabrisse und vollständige Kopulationssequenzen. Die Runde endet früher, sobald alle Birkhähne tot sind. Deine fünf besten Ergebnisse werden lokal in diesem Browser gespeichert.'}
 ];
 let currentLevel=1;
 let levelCompleteLock=false;
@@ -1011,10 +1022,10 @@ function showLevelBriefing(level){
   intro.style.display='none'; levelBriefing.style.display='flex'; levelComplete.style.display='none'; result.style.display='none';
   const free=currentLevel===6;
   levelBriefingKicker.textContent=free?'HIGHSCORE':'TRAINING';
-  levelBriefingTitle.textContent=free?'FREIES SPIEL':`Level ${currentLevel} · ${LEVELS[currentLevel].title}`;
+  levelBriefingTitle.textContent=free?'ZUM TEUFELSMOOR':`Level ${currentLevel} · ${LEVELS[currentLevel].title}`;
   levelBriefingQuote.textContent=LEVELS[currentLevel].quote; levelBriefingText.textContent=LEVELS[currentLevel].explanation;
   levelBriefingGoal.innerHTML=`<b>${free?'Aufgabe':'Ziel'}</b><br>${LEVELS[currentLevel].objective}`;
-  beginLevelBtn.textContent=free?'Freies Spiel starten':`Level ${currentLevel} starten`;
+  beginLevelBtn.textContent=free?'Zum Teufelsmoor':`Level ${currentLevel} starten`;
   beginLevelBtn.onclick=()=>startLevel(currentLevel);
 }
 function startLevel(level){
@@ -1041,8 +1052,8 @@ function showTrainingResult(success){
 
   if(success && currentLevel===5){
     levelCompleteTitle.textContent='Training abgeschlossen';
-    levelCompleteText.textContent='Alle fünf Mechaniken sind eingeführt. Jetzt beginnt das freie Spiel um den persönlichen Highscore.';
-    continueLevelBtn.textContent='Freies Spiel starten';
+    levelCompleteText.textContent='Alle fünf Mechaniken sind eingeführt. Jetzt geht es zum Teufelsmoor und um den persönlichen Highscore.';
+    continueLevelBtn.textContent='Zum Teufelsmoor';
     continueLevelBtn.onclick=()=>showLevelBriefing(6);
   }else if(success){
     levelCompleteTitle.textContent=`Level ${currentLevel} geschafft`;
@@ -1571,7 +1582,7 @@ function updateUI(){
   timeMobile.textContent=timeNow;
 
   if(currentLevel===6){
-    levelNumber.textContent='FREIES SPIEL';
+    levelNumber.textContent='ZUM TEUFELSMOOR';
     levelObjective.textContent=`PUNKTE ${score} · BESTE ${storedBestScore}`;
   }else{
     levelNumber.textContent=`LEVEL ${currentLevel} · ${LEVELS[currentLevel].title}`;
@@ -1823,7 +1834,7 @@ function endGame(reason='time'){
     highScoreBlock=`<br><br><b>${score>oldBest?'NEUER PERSÖNLICHER HIGHSCORE':'Persönliche Bestenliste'}</b><br>${ranking}`;
   }
   summary.innerHTML=
-   `<b>${currentLevel===6?'Freies Spiel beendet':'Tagesbilanz'}</b><br><br>
+   `<b>${currentLevel===6?'Runde im Teufelsmoor beendet':'Tagesbilanz'}</b><br><br>
     ${reason==='all_dead'?'<span style="color:#b8c2c8">Kein Birkhahn ist mehr übrig.</span><br><br>':''}
     Punkte: <b>${score}</b><br>
     Birkhähne getötet: <b>${kills}</b><br>
